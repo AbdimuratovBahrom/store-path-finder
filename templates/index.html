@@ -3,14 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <title>Поиск пути электроснабжения</title>
+    <script>
+        function updateRows() {
+            var block = document.getElementById('block').value;
+            var rowSelect = document.getElementById('row');
+            var storeSelect = document.getElementById('store_name');
+            rowSelect.innerHTML = '<option value="">Выберите ряд</option>';
+            storeSelect.innerHTML = '<option value="">Выберите магазин</option>';
+            if (block) {
+                fetch('/get_rows?block=' + encodeURIComponent(block))
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(row => {
+                            var option = document.createElement('option');
+                            option.value = row;
+                            option.text = row;
+                            rowSelect.appendChild(option);
+                        });
+                    });
+            }
+        }
+
+        function updateStores() {
+            var block = document.getElementById('block').value;
+            var row = document.getElementById('row').value;
+            var storeSelect = document.getElementById('store_name');
+            storeSelect.innerHTML = '<option value="">Выберите магазин</option>';
+            if (block && row) {
+                fetch('/get_stores?block=' + encodeURIComponent(block) + '&row=' + encodeURIComponent(row))
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(store => {
+                            var option = document.createElement('option');
+                            option.value = store;
+                            option.text = store;
+                            storeSelect.appendChild(option);
+                        });
+                    });
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Поиск пути для магазина</h1>
+    <h1>Поиск линий электроснабжения магазинов</h1>
     <form method="POST">
-        <label for="store_name">Введите имя магазина (например, Маг-1):</label>
-        <input type="text" id="store_name" name="store_name" required>
+        <label for="block">Блок:</label>
+        <select id="block" name="block" onchange="updateRows()">
+            <option value="">Выберите блок</option>
+            {% for block in blocks %}
+                <option value="{{ block }}" {% if block == selected_block %}selected{% endif %}>{{ block }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="row">Ряд:</label>
+        <select id="row" name="row" onchange="updateStores()">
+            <option value="">Выберите ряд</option>
+            {% for row in rows %}
+                <option value="{{ row }}" {% if row == selected_row %}selected{% endif %}>{{ row }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="store_name">Магазин:</label>
+        <select id="store_name" name="store_name">
+            <option value="">Выберите магазин</option>
+            {% for store in stores %}
+                <option value="{{ store }}" {% if store == selected_store %}selected{% endif %}>{{ store }}</option>
+            {% endfor %}
+        </select><br><br>
+
         <button type="submit">Поиск</button>
     </form>
+
     {% if path %}
         <h2>Результат:</h2>
         <p>{{ path }}</p>

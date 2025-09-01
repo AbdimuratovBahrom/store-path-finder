@@ -42,29 +42,38 @@ def parse_stores(store_str):
     return prefixed
 
 paths = [p.strip() for p in paths_text.split(';') if p.strip()]
-store_paths = {}
+store_paths = []
 for path in paths:
     if '>' not in path:
         continue
     components = [c.strip() for c in path.split('>')]
     full_path = ' > '.join(components[:-1])
     store_part = components[-1].strip().replace('Маг-', '')
+    block = None
+    row = None
+    for i, comp in enumerate(components):
+        if 'блок' in comp.lower():
+            block = comp
+        if 'Ряд' in comp:
+            row = comp
     if any(spec in store_part.lower() for spec in ['освещение', 'кабинет', 'тунель', 'пирошкихона', 'шит', 'пост']):
-        store_name = store_part
-        store_paths[store_name] = full_path
+        store_paths.append((store_part, full_path, block, row))
     else:
         stores = parse_stores(store_part)
         for store in stores:
-            store_paths[store] = full_path
+            store_paths.append((store, full_path, block, row))
 
 conn = sqlite3.connect('stores.db')
 c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS stores (
+c.execute('''DROP TABLE IF EXISTS stores''')
+c.execute('''CREATE TABLE stores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE,
-    path TEXT
+    name TEXT,
+    path TEXT,
+    block TEXT,
+    row TEXT
 )''')
-for name, path in store_paths.items():
-    c.execute("INSERT OR REPLACE INTO stores (name, path) VALUES (?, ?)", (name, path))
+for name, path, block, row in store_paths:
+    c.execute("INSERT INTO stores (name, path, block, row) VALUES (?, ?, ?, ?)", (name, path, block, row))
 conn.commit()
 conn.close()
