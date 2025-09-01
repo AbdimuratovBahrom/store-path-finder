@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Поиск пути электроснабжения</title>
+</head>
+<body>
+    <h1>Поиск пути для магазина</h1>
+    <form method="POST">
+        <label for="store_name">Введите имя магазина (например, Маг-1):</label>
+        <input type="text" id="store_name" name="store_name" required>
+        <button type="submit">Поиск</button>
+    </form>
+    {% if path %}
+        <h2>Результат:</h2>
+        <p>{{ path }}</p>
+    {% endif %}
+</body>
+</html>
