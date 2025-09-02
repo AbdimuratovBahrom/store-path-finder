@@ -86,5 +86,9 @@ def get_stores_route():
     stores = get_stores(block, row) if block and row else []
     return jsonify(stores)
 
+@app.route('/ping')
+def ping():
+    return jsonify({'status': 'alive'})
+
 if __name__ == '__main__':
     app.run(debug=True)
