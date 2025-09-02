@@ -1,0 +1,22 @@
+
+cd C:\Users\user\store-path-finder
+
+del stores.db
+
+
+myenv\Scripts\activate
+
+python init_db.py
+
+
+dir stores.db
+
+
+python test_db.py
+
+
+python app.py
+
+
+http://127.0.0.1:5000/
+
