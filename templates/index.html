@@ -1,96 +1,34 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск пути электроснабжения</title>
-     <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
+    <title>Поиск пути магазина</title>
+    <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
     <link rel="stylesheet" href="/static/style.css">
-    
-    <script>
-        function updateRows() {
-            var block = document.getElementById('block').value;
-            var rowSelect = document.getElementById('row');
-            var storeSelect = document.getElementById('store_name');
-            rowSelect.innerHTML = '<option value="">Выберите ряд</option>';
-            storeSelect.innerHTML = '<option value="">Выберите магазин</option>';
-            if (block) {
-                fetch('/get_rows?block=' + encodeURIComponent(block))
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(row => {
-                            var option = document.createElement('option');
-                            option.value = row;
-                            option.text = row;
-                            rowSelect.appendChild(option);
-                        });
-                    });
-            }
-        }
-
-        function updateStores() {
-            var block = document.getElementById('block').value;
-            var row = document.getElementById('row').value;
-            var storeSelect = document.getElementById('store_name');
-            storeSelect.innerHTML = '<option value="">Выберите магазин</option>';
-            if (block && row) {
-                fetch('/get_stores?block=' + encodeURIComponent(block) + '&row=' + encodeURIComponent(row))
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(store => {
-                            var option = document.createElement('option');
-                            option.value = store;
-                            option.text = store;
-                            storeSelect.appendChild(option);
-                        });
-                    });
-            }
-        }
-    </script>
 </head>
+
 <body>
     <div class="container">
-        <header>
-            <h1>Поиск линий электроснабжения магазинов Абу Сахий.</h1>
-        </header>
-        <main>
-            <form method="POST" class="search-form">
-                <div class="form-group">
-                    <label for="block" class="form-label">Блок:</label>
-                    <select id="block" name="block" class="form-select" onchange="updateRows()">
-                        <option value="">Выберите блок</option>
-                        {% for block in blocks %}
-                            <option value="{{ block }}" {% if block == selected_block %}selected{% endif %}>{{ block }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="row" class="form-label">Ряд:</label>
-                    <select id="row" name="row" class="form-select" onchange="updateStores()">
-                        <option value="">Выберите ряд</option>
-                        {% for row in rows %}
-                            <option value="{{ row }}" {% if row == selected_row %}selected{% endif %}>{{ row }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="store_name" class="form-label">Магазин:</label>
-                    <select id="store_name" name="store_name" class="form-select">
-                        <option value="">Выберите магазин</option>
-                        {% for store in stores %}
-                            <option value="{{ store }}" {% if store == selected_store %}selected{% endif %}>{{ store }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button type="submit" class="form-button">Поиск</button>
-            </form>
-            {% if path %}
-                <div class="result">
-                    <h2>Результат:</h2>
-                    <p>{{ path }}</p>
-                </div>
-            {% endif %}
-        </main>
+        <h1>Поиск линий электроснабжения магазинов</h1>
+        <select id="block" class="form-select" onchange="loadRows()">
+            <option value="">Выберите блок</option>
+            {% for block in blocks %}
+            <option value="{{ block }}">{{ block }}</option>
+            {% endfor %}
+        </select>
+        <select id="row" class="form-select" onchange="loadStores()" disabled>
+            <option value="">Выберите ряд</option>
+        </select>
+        <select id="store" class="form-select" disabled>
+            <option value="">Выберите магазин</option>
+        </select>
+        <button class="form-button" onclick="getPath()">Поиск</button>
+        <div id="pathResult"></div>
     </div>
+
+   <script src="/static/script.js"></script>
 </body>
+
 </html>

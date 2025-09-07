@@ -1,0 +1,292 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск пути электроснабжения</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function updateRows() {
+            var block = $('#block').val();
+            $.get('/get_rows', { block: block }, function (data) {
+                $('#row').empty().append('<option value="">Выберите ряд</option>');
+                $.each(data, function (index, row) {
+                    $('#row').append('<option value="' + row + '">' + row + '</option>');
+                });
+                $('#store_name').empty().append('<option value="">Выберите магазин</option>');
+            });
+        }
+
+        function updateStores() {
+            var block = $('#block').val();
+            var row = $('#row').val();
+            $.get('/get_stores', { block: block, row: row }, function (data) {
+                $('#store_name').empty().append('<option value="">Выберите магазин</option>');
+                $.each(data, function (index, store) {
+                    $('#store_name').append('<option value="' + store + '">' + store + '</option>');
+                });
+            });
+        }
+
+        $(document).ready(function () {
+            $('form').submit(function (event) {
+                event.preventDefault();
+                $.post('/get_path', $(this).serialize(), function (data) {
+                    $('.result').html('<h2>Результат:</h2><p>' + data.path + '</p>');
+                });
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Поиск линий электроснабжения магазинов</h1>
+        </header>
+        <main>
+            <form>
+                <div class="form-group">
+                    <label for="block" class="form-label">Блок:</label>
+                    <select id="block" name="block" class="form-select" onchange="updateRows()">
+                        <option value="">Выберите блок</option>
+                        {% for block in blocks %}
+                        <option value="{{ block }}" {% if block==selected_block %}selected{% endif %}>{{ block }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="row" class="form-label">Ряд:</label>
+                    <select id="row" name="row" class="form-select" onchange="updateStores()">
+                        <option value="">Выберите ряд</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="store_name" class="form-label">Магазин:</label>
+                    <select id="store_name" name="store_name" class="form-select">
+                        <option value="">Выберите магазин</option>
+                    </select>
+                </div>
+                <button type="submit" class="form-button">Поиск</button>
+            </form>
+            <div class="result"></div>
+        </main>
+    </div>
+</body>
+
+</html>
+
+
+
+
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    /* background: linear-gradient(135deg, #e6f0fa 0%, #f4f6f9 100%); */
+    color: #2d3748;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url(./images/Abu\ saxiy\ center2.jpg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    
+    
+}
+
+.container {
+    /* max-width: 900px;
+    margin: 30px;
+    padding: 40px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); */
+     max-width: 900px;
+    margin: 30px;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.2); /* Полупрозрачный белый фон */
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px); /* Эффект размытия (мокрое стекло) */
+    -webkit-backdrop-filter: blur(10px); /* Поддержка для WebKit-браузеров */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Лёгкая граница для стиля */
+    
+}
+
+.container label, .container select {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* Тень для текста */
+    color: #2d3748; /* Тёмный цвет текста */
+}
+
+.container button {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Тень для кнопки */
+    color: #dfe6ed;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+h1 {
+    font-size: 1.8rem;
+    color: #1e40af;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-label {
+    font-size: 1.2rem;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.form-select {
+    padding: 14px 16px;
+    font-size: 1.1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #b5d7ed;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #1e40af;
+    box-shadow: 0 0 10px rgba(30, 64, 175, 0.3);
+    background-color: #fff;
+}
+
+.form-button {
+    padding: 16px 32px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background-color: #1e40af;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: center;
+}
+
+.form-button:hover {
+    background-color: #38a169;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(30, 64, 175, 0.4);
+}
+
+.result {
+    margin-top: 40px;
+    padding: 25px;
+    background-color: #f0fff4;
+    border-left: 6px solid #38a169;
+    border-radius: 10px;
+    animation: fadeIn 0.6s ease-in;
+}
+
+.result h2 {
+    font-size: 1.8rem;
+    color: #38a169;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.result p {
+    font-size: 1.2rem;
+    color: #2d3748;
+    word-break: break-word;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .container {
+        margin: 20px;
+        padding: 25px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .form-select, .form-button {
+        width: 100%;
+        font-size: 1rem;
+    }
+
+    .form-button {
+        padding: 14px;
+    }
+
+    .search-form {
+        max-width: 100%;
+    }
+
+    .result {
+        padding: 20px;
+    }
+    .form-button {
+        width: 50%;
+    padding: 16px 32px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background-color: #1e40af;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: center;
+}
+
+}

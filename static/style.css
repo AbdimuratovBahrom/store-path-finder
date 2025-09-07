@@ -8,53 +8,37 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    /* background: linear-gradient(135deg, #e6f0fa 0%, #f4f6f9 100%); */
     color: #2d3748;
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url(./images/Abu\ saxiy\ center2.jpg);
+    background-image: url(/static/images/Abu\ saxiy\ center2.jpg);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    
-    
 }
 
 .container {
-    /* max-width: 900px;
+    max-width: 900px;
     margin: 30px;
     padding: 40px;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); */
-     max-width: 900px;
-    margin: 30px;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.2); /* Полупрозрачный белый фон */
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(10px); /* Эффект размытия (мокрое стекло) */
-    -webkit-backdrop-filter: blur(10px); /* Поддержка для WebKit-браузеров */
-    border: 1px solid rgba(255, 255, 255, 0.3); /* Лёгкая граница для стиля */
-    
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.container label, .container select {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* Тень для текста */
-    color: #2d3748; /* Тёмный цвет текста */
+.container select {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    color: #2d3748;
 }
 
 .container button {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Тень для кнопки */
-    color: #dfe6ed;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 50px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
@@ -62,26 +46,8 @@ h1 {
     color: #1e40af;
     font-weight: 700;
     letter-spacing: -0.5px;
-}
-
-.search-form {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.form-label {
-    font-size: 1.2rem;
-    color: #4a5568;
-    font-weight: 600;
+    text-align: center;
+    margin-bottom: 50px;
 }
 
 .form-select {
@@ -92,6 +58,8 @@ h1 {
     background-color: #b5d7ed;
     transition: all 0.3s ease;
     cursor: pointer;
+    width: 100%;
+    margin: 10px 0;
 }
 
 .form-select:focus {
@@ -111,7 +79,8 @@ h1 {
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    align-self: center;
+    width: 100%;
+    margin: 10px 0;
 }
 
 .form-button:hover {
@@ -120,31 +89,32 @@ h1 {
     box-shadow: 0 6px 14px rgba(30, 64, 175, 0.4);
 }
 
-.result {
+#pathResult {
     margin-top: 40px;
     padding: 25px;
     background-color: #f0fff4;
     border-left: 6px solid #38a169;
     border-radius: 10px;
     animation: fadeIn 0.6s ease-in;
-}
-
-.result h2 {
-    font-size: 1.8rem;
-    color: #38a169;
-    font-weight: 600;
-    margin-bottom: 15px;
-}
-
-.result p {
     font-size: 1.2rem;
     color: #2d3748;
     word-break: break-word;
 }
 
+.error {
+    color: red;
+}
+
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Адаптивность */
@@ -158,34 +128,18 @@ h1 {
         font-size: 1.5rem;
     }
 
-    .form-select, .form-button {
-        width: 100%;
+    .form-select,
+    .form-button {
         font-size: 1rem;
     }
 
     .form-button {
         padding: 14px;
+        width: 50%;
+        align-self: center;
     }
 
-    .search-form {
-        max-width: 100%;
-    }
-
-    .result {
+    #pathResult {
         padding: 20px;
     }
-    .form-button {
-        width: 50%;
-    padding: 16px 32px;
-    font-size: 1.2rem;
-    font-weight: 600;
-    background-color: #1e40af;
-    color: #ffffff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    align-self: center;
-}
-
 }
