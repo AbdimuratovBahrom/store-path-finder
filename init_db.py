@@ -1,122 +1,112 @@
 import sqlite3
 import re
 from block1_data import get_block1_data
+from block2_data import block2_data
+from block3_data import get_block3_data
+from block38_data import get_block38_data
 
-def parse_store_range(store_range):
-    """Парсит списки и диапазоны магазинов, например:
-    '1,2,53,54,1А,1Б,1В' → ['Маг-1', 'Маг-2', 'Маг-53', 'Маг-54', 'Маг-1А', 'Маг-1Б', 'Маг-1В']
-    'Маг-23g...46g' → ['Маг-23g', 'Маг-24g', ..., 'Маг-46g']"""
-    print(f"Parsing store range: {store_range}")  # Логирование для отладки
-    if '...' in store_range:
-        try:
-            prefix, range_str = store_range.split('...')
-            if '-' not in range_str:
-                print(f"Invalid range format in {store_range}, returning as is")
-                return [store_range]
-            start, end = map(int, range_str.split('-')[1:])
-            # Учитываем суффикс, например 'g' в 'Маг-23g...46g'
-            suffix = prefix[-1] if prefix[-1].isalpha() else ''
-            prefix = prefix[:-1] if suffix else prefix
-            return [f"{prefix}{i}{suffix}" for i in range(start, end + 1)]
-        except Exception as e:
-            print(f"Error parsing range {store_range}: {e}")
-            return [store_range]
-    elif ',' in store_range:
-        try:
-            return [f"Маг-{s.strip()}" if re.match(r'^\d+[А-Яа-я]?$', s.strip()) or s.strip().isdigit() else s.strip() for s in store_range.split(',')]
-        except Exception as e:
-            print(f"Error parsing list {store_range}: {e}")
-            return [store_range]
-    else:
-        # Если это одиночное имя, добавляем префикс "Маг-" только для числовых или буквенно-числовых имен
-        if re.match(r'^\d+[А-Яа-я]?$', store_range) or store_range.isdigit():
-            return [f"Маг-{store_range}"]
-        return [store_range]
+def parse_store_range(store_str, block_name):
+    stores = []
+    parts = store_str.replace(' ', '').split(',')
+    
+    # Список названий, к которым не добавляется префикс "Маг-"
+    no_prefix_shops = [
+        '35-постГамбургербутка',
+        '35-постохрана',
+        '9-постГамбургербутка',
+        '9-постохрана',
+        '1-пост(5-арка-дизельлиния:шлакбаун)',
+        '1-пост(5-арка)'
+    ]
+    
+    # Для 3-блок числа 1–11 без префикса "Маг-"
+    no_prefix_numbers = [str(i) for i in range(1, 12)]  # '1', '2', ..., '11'
+    
+    for part in parts:
+        if '...' in part:
+            try:
+                start, end = part.split('...')
+                start_match = re.match(r'(\D*)(\d+)(.*)', start)
+                end_match = re.match(r'(\D*)(\d+)(.*)', end)
+                if start_match and end_match:
+                    prefix = start_match.group(1) or ''
+                    start_num = int(start_match.group(2))
+                    end_num = int(end_match.group(2))
+                    suffix = start_match.group(3) or ''
+                    for i in range(start_num, end_num + 1):
+                        store_name = f"{prefix}{i}{suffix}"
+                        # Для 38-склад не добавляем префикс "Маг-"
+                        if block_name == '38-склад':
+                            stores.append(store_name)
+                        # Для других блоков проверяем исключения
+                        elif store_name in no_prefix_shops or (block_name == '3-блок' and store_name in no_prefix_numbers):
+                            stores.append(store_name)
+                        else:
+                            stores.append(f"Маг-{store_name}" if store_name[0].isdigit() else store_name)
+                else:
+                    stores.append(part)
+            except (ValueError, AttributeError):
+                stores.append(part)
+        else:
+            # Для 38-склад не добавляем префикс "Маг-"
+            if block_name == '38-склад':
+                stores.append(part)
+            # Для других блоков проверяем исключения
+            elif part in no_prefix_shops or (block_name == '3-блок' and part in no_prefix_numbers):
+                stores.append(part)
+            else:
+                if part and not (part[0].isdigit() or part.startswith('1-') or part.startswith('9-') or part.startswith('35-')):
+                    stores.append(part)
+                else:
+                    stores.append(f"Маг-{part}" if part else part)
+    
+    # Сортировка для 38-склад: магазины, начинающиеся с "38", идут первыми
+    if block_name == '38-склад':
+        stores.sort(key=lambda x: (not x.startswith('38'), x))
+    # Сортировка для 3-блок: по числовому значению или строке
+    elif block_name == '3-блок':
+        def sort_key(x):
+            match = re.search(r'\d+', x)
+            if match:
+                return (0, int(match.group()))
+            return (1, x)
+        stores.sort(key=sort_key)
+    
+    return stores
+
+def add_shops_to_db(data, block_name, cursor):
+    for entry in data:
+        path = entry['path']
+        shops = entry['shops']
+        # Обрабатываем каждый магазин отдельно
+        for shop in shops:
+            parsed_shops = parse_store_range(shop, block_name)
+            for parsed_shop in parsed_shops:
+                cursor.execute('''
+                    INSERT OR REPLACE INTO shops (block, shop_number, path)
+                    VALUES (?, ?, ?)
+                ''', (block_name, parsed_shop, path))
+                # Отладочный вывод
+                print(f"Добавлено: block={block_name}, shop={parsed_shop}, path={path}")
 
 def init_db():
-    conn = sqlite3.connect('stores.db')
-    c = conn.cursor()
-
-    # Создаем таблицу
-    c.execute('''CREATE TABLE IF NOT EXISTS stores (
-        block TEXT,
-        row TEXT,
-        name TEXT,
-        path TEXT
-    )''')
-
-    # Очищаем только данные для 1-блок
-    c.execute('DELETE FROM stores WHERE block = ?', ('1-блок',))
-
-    # Замены для ЩР1 и ЩР14
-    replacements = {
-        'ЩР1': '38-автостансия',
-        'ЩР14': 'Фаиз ошхона 38'
-    }
-
-    # Данные для 3-блок и 38-склад
-    stores_data = [
-        ('3-блок', 'Ряд 1', '1,2,53,54,1А,1Б,1В', 'ТП-4768 > Т2 > АВР(ЩР8) > 3-блок > ЩР8 > Ряд 1 > ШО-7'),
-        ('3-блок', 'Ряд 1', '3-блок туалет,кател', 'ТП-4768 > Т2 > АВР(ЩР8) > 3-блок > ЩР8 > Ряд 1 > ШО-7'),
-        ('3-блок', 'Ряд 1', '3,4,51,52,1Д', 'ТП-4768 > Т2 > АВР(ЩР15) > 3-блок > ЩР15 > Ряд 1 > ШО-21'),
-        ('3-блок', 'Ряд 1', '5,6,7,8,9,10,11,12,13,14,15,40,41,42,43,44,45,46,47,48,49,50', 'ТП-4768 > Т1 > АВР(ЩР12) > 3-блок > ЩР12 > Ряд 1 > ШО-10'),
-        ('3-блок', 'Ряд 1', '16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39', 'ТП-4768 > Т1 > АВР(ЩР12) > 3-блок > ЩР12 > Ряд 1 > ШО-12'),
-        ('3-блок', 'Ряд 1', 'Тунель калитка шит на столбе', 'ТП-4768 > Т1/Т2 > АВР(ЩР11)/АВР(ЩР8) > 3-блок > ЩР11/ЩР8 > Ряд 1 > ШО-Нодир шит'),
-        ('3-блок', 'Ряд 1', 'Маг-1Е', 'ТП-4768 > Т2 > АВР(ЩР15) > 3-блок > ЩР15 > Ряд 1 > ШО-1Е'),
-        ('3-блок', 'Ряд 1', '13-пост,Пирошкихона1,Пирошкихона2', 'ТП-4768 > Т2 > АВР(ЩР7) > 3-блок > Ряд 1 > ШО-29'),
-        ('3-блок', 'Ряд 2', '1,2,3,4,5,6,7,8,9,10,11,58,89,60,61,62,63,64,65,66,67,68', 'ТП-4768 > Т2 > АВР(ЩР8) > 3-блок > ЩР8 > Ряд 2 > ШО-8'),
-        ('3-блок', 'Ряд 2', '12,13,14,15,16,17,18,19,20,21,22,47,48,49,50,51,52,53,54,55,56,57', 'ТП-4768 > Т1 > АВР(ЩР11) > 3-блок > ЩР11 > Ряд 2 > ШО-18'),
-        ('3-блок', 'Ряд 2', '23,24,25,26,27,28,29,30,31,32,33,34,35,46', 'ТП-4768 > Т2 > АВР(ЩР15) > 3-блок > ЩР15 > Ряд 2 > ШО-13'),
-        ('3-блок', 'Ряд 2', 'Печенье цех-12-пост', 'ТП-4768 > Т1 > АВР(ЩР11) > 3-блок > ЩР11 > Ряд 2 > 12 пост'),
-        ('3-блок', 'Ряд 3', '1,2,3,4,5,6,7,8,9,10,11,58,89,60,61,62,63,64,65,66,67,68', 'ТП-4768 > Т1 > АВР(ЩР2) > 3-блок > ЩР2 > Ряд 3 > ШО-9'),
-        ('3-блок', 'Ряд 3', '23,24,25,26,27,28,29,30,31,32,33,34,35,46', 'ТП-4768 > Т2 > АВР(ЩР15) > 3-блок > ЩР15 > Ряд 3 > ШО-14'),
-        ('3-блок', 'Ряд 3', '12,13,14,15,16,17,18,19,20,21,22,47,48,49,50,51,52,53,54,55,56,57', 'ТП-4768 > Т2 > АВР(ЩР15) > 3-блок > ЩР15 > Ряд 3 > ШО-17'),
-        ('3-блок', 'Ряд 3', 'освещение 3-блока:(магазин 3-57)', 'ТП-4768 > Т1 > АВР(ЩР11) > 3-блок > ЩР11 > Ряд 3 > ШО-20'),
-        ('3-блок', 'Ряд 4', '1,2,3,4,5,6,7,8,9,10,11,58,89,60,61,62,63,64,65,66,67,68', 'ТП-4768 > Т2 > АВР(ЩР8) > 3-блок > ЩР8 > Ряд 4 > ШО-11'),
-        ('3-блок', 'Ряд 4', '23,24,25,26,27,28,29,30,31,32,33,34,35,46', 'ТП-4768 > Т1 > АВР(ЩР8) > 3-блок > ЩР12 > Ряд 4 > ШО-15'),
-        ('3-блок', 'Ряд 4', '12,13,14,15,16,17,18,19,20,21,22,47,48,49,50,51,52,53,54,55,56,57', 'ТП-4768 > Т1 > АВР(ЩР8) > 3-блок > ЩР12 > Ряд 4 > ШО-16'),
-        ('3-блок', 'Ряд 6', '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26', 'ТП-4768 > T2 > АВР(ЩР9) > 3-блок > ЩР9 > Ряд 6 > ШО-1'),
-        ('3-блок', 'Ряд 7', '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24', 'ТП-4768 > T2 > АВР(ЩР9) > 3-блок > ЩР9 > Ряд 7 > ШО-2'),
-        ('3-блок', 'Ряд 8', '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24', 'ТП-4768 > T2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 8 > ШО-3'),
-        ('3-блок', 'Ряд 9', '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22', 'ТП-4768 > T2 > АВР(ЩР9) > 3-блок > ЩР9 > Ряд 9 > ШО-4'),
-        ('3-блок', 'Ряд 10', '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22', 'ТП-4768 > T2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 10 > ШО-5'),
-        ('3-блок', 'Ряд 11', '1,2,3,4,5,6,7,8,9,10,11,12,13', 'ТП-4768 > Т2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 11 > ШО-0'),
-        ('3-блок', 'Ряд 11', '14,15,16,17,18,19,20,21,22', 'ТП-4768 > Т2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 11 > ШО-6'),
-        ('3-блок', 'Ряд 11', 'ШО-освещение 11-ряда', 'ТП-4768 > Т2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 11 > ШО-освещение 11-ряда'),
-        ('3-блок', 'Ряд 11', 'Кабинет электриков', 'ТП-4768 > Т2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 11 > Кабинет электриков'),
-        ('3-блок', 'Ряд 5', '1,2,3,4,5a1,5a2', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-26'),
-        ('3-блок', 'Ряд 5', '5,6,7,8,5a3,5a4', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-27'),
-        ('3-блок', 'Ряд 5', '9,10,11,12,5a5,5a6', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-22'),
-        ('3-блок', 'Ряд 5', '13,14,15,16,5a7,5a8', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-23'),
-        ('3-блок', 'Ряд 5', '17,18,19,20,5a9,5a10', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-24'),
-        ('3-блок', 'Ряд 5', '21,22,23,24,25,26,27,28,5a11,5a12,5a13', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-25'),
-        ('3-блок', 'Ряд 5', '13-пост,Paynet', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 5 > ШО-28'),
-        ('3-блок', 'Ряд 2', 'Маг-23g...46g', 'ТП-5353 > Т2 > АВР(ЩР16) > 3-блок > ЩР16 > Ряд 2 > ШО-13'),
-        ('3-блок', 'Ряд 9', 'Маг-1g...22g', 'ТП-5353 > Т2 > АВР(ЩР9) > 3-блок > ЩР9 > Ряд 9 > ШО-4'),
-        ('3-блок', 'Ряд 10', 'Маг-1g...22g', 'ТП-5353 > Т2 > АВР(ЩР17) > 3-блок > ЩР17 > Ряд 10 > ШО-5'),
-        ('38-склад', '38-склад', '38-автостансия,38 склады,38 туалет,38 Дониер ошхона,38 бутки-fastfood,144-пост', 'ТП-4768 > Т1 > АВР(ЩР1) > 38-склад > ЩР1'),
-        ('38-склад', '38-склад', 'Фаиз ошхона 38,38 склады,145-пост', 'ТП-4768 > Т2 > АВР(ЩР14) > 38-склад > ЩР14'),
-        ('3-блок', None, 'Пустой', 'ТП-4768 > Т2 > АВР(ЩР10) > 3-блок > ЩР10'),
-        ('3-блок', 'ZARIN', 'Маг-ZARIN', 'ТП-4768 > Т1 > АВР(ЩР6) > 3-блок > ШО-ZARIN')
-    ]
-
-    # Разбиваем списки и диапазоны магазинов, применяем замены и вставляем в базу
-    for block, row, name, path in stores_data:
-        print(f"Inserting: block={block}, row={row}, name={name}, path={path}")  # Логирование
-        store_names = parse_store_range(name)
-        for store_name in store_names:
-            # Применяем замены для ЩР1 и ЩР14
-            final_name = replacements.get(store_name, store_name)
-            c.execute('INSERT INTO stores (block, row, name, path) VALUES (?, ?, ?, ?)', 
-                      (block, row, final_name, path))
-
-    # Добавляем данные для 1-блок из block1_data.py
-    block1_data = get_block1_data()
-    for block, row, name, path in block1_data:
-        print(f"Inserting: block={block}, row={row}, name={name}, path={path}")  # Логирование
-        c.execute('INSERT INTO stores (block, row, name, path) VALUES (?, ?, ?, ?)', 
-                  (block, row, name, path))
-
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS shops (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            block TEXT,
+            shop_number TEXT,
+            path TEXT
+        )
+    ''')
+    
+    add_shops_to_db(get_block1_data(), '1-блок', cursor)
+    add_shops_to_db(block2_data, '2-блок', cursor)
+    add_shops_to_db(get_block3_data(), '3-блок', cursor)
+    add_shops_to_db(get_block38_data(), '38-склад', cursor)
+    
     conn.commit()
     conn.close()
 

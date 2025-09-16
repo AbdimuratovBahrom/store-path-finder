@@ -1,7 +1,7 @@
 
 cd C:\Users\user\store-path-finder
 
-del stores.db
+del shops.db
 
 
 myenv\Scripts\activate
@@ -9,16 +9,53 @@ myenv\Scripts\activate
 python init_db.py
 
 
-dir stores.db
+dir shops.db
 
 
 python test_db.py
 
 
+python app.pyBlack wolf, [14.09.2025 13:42]
+(myenv) C:\Users\user\store-path-finder>dir
+(myenv) C:\Users\user\store-path-finder>dir static
+(myenv) C:\Users\user\store-path-finder>dir templates
+
+(myenv) C:\Users\user\store-path-finder>sqlite3 shops.db
+sqlite> .tables
+sqlite> SELECT * FROM shops WHERE block = '1-блок' LIMIT 5;
+sqlite> SELECT * FROM shops WHERE block = '2-блок' LIMIT 5;
+sqlite> SELECT * FROM shops WHERE block = '3-блок' LIMIT 5;
+sqlite> SELECT * FROM shops WHERE shop_number = 'Маг-1';
+sqlite> SELECT * FROM shops WHERE shop_number = '3-блок туалет,кател';
+sqlite> .exit
+
+
+(myenv) C:\Users\user\store-path-finder>pip install flask
+
+
+(myenv) C:\Users\user\store-path-finder>del shops.db
+(myenv) C:\Users\user\store-path-finder>python init_db.py
+(myenv) C:\Users\user\store-path-finder>python test_db.py
+(myenv) C:\Users\user\store-path-finder>python app.py
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+del shops.db
+
+python init_db.py
+dir shops.db
+python test_db.py
 python app.py
 
 
 http://127.0.0.1:5000/
+
+
+(myenv) C:\Users\user\store-path-finder>python init_db.py
+(myenv) C:\Users\user\store-path-finder>sqlite3 shops.db
+sqlite> SELECT DISTINCT block FROM shops;
+sqlite> SELECT shop_number FROM shops WHERE block = '38-склад';
+sqlite> .exit
 
 
 

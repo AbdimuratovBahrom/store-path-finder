@@ -1,98 +1,86 @@
-
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import re
 
 app = Flask(__name__)
 
+def extract_row(path):
+    match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9]+)', path)
+    return match.group(1) if match else ''
+
 def sort_rows(rows):
-    """Сортировка рядов: числовые (Ряд 1, Ряд 2) по числу, буквенные (Ряд L, Ряд Q) по алфавиту."""
-    def row_key(row):
+    # Сортировка рядов: числовые (Ряд 1, Ряд 2) по числу, буквенные (Ряд L, Ряд Q) по алфавиту
+    def key(row):
         match = re.match(r'Ряд (\d+)', row)
-        if match:
-            return (0, int(match.group(1)))  # Числовые ряды сортируются по числу
-        return (1, row)  # Буквенные ряды сортируются по алфавиту
-    return sorted(rows, key=row_key)
+        return (0, int(match.group(1))) if match else (1, row)
+    return sorted(rows, key=key)
 
 def sort_stores(stores):
-    """Сортировка магазинов: числовые (Маг-1, Маг-1А) по числу, остальные по алфавиту."""
-    def store_key(store):
+    # Сортировка магазинов: числовые (Маг-1, Маг-1А) по числу, остальные по алфавиту
+    def key(store):
         match = re.match(r'Маг-(\d+)([А-Яа-я]?)', store)
         if match:
             num = int(match.group(1))
             suffix = match.group(2) or ''
-            return (0, num, suffix)  # Числовые магазины сортируются по числу и суффиксу
-        return (1, store)  # Остальные сортируются по алфавиту
-    return sorted(stores, key=store_key)
+            return (0, num, suffix)
+        return (1, store)
+    return sorted(stores, key=key)
 
 @app.route('/')
 def index():
-    print("Rendering index.html")  # Логирование
-    conn = sqlite3.connect('stores.db')
-    c = conn.cursor()
-    c.execute('SELECT DISTINCT block FROM stores')
-    blocks = sorted([row[0] for row in c.fetchall()])  # Сортировка блоков по алфавиту
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT block FROM shops')
+    blocks = sorted([row[0] for row in cursor.fetchall()])  # Сортировка блоков по алфавиту
     conn.close()
-    print(f"Blocks fetched: {blocks}")  # Логирование
     return render_template('index.html', blocks=blocks)
 
-@app.route('/get_rows', methods=['GET'])
+@app.route('/get_rows')
 def get_rows():
     block = request.args.get('block')
-    print(f"Fetching rows for block: {block}")  # Логирование
-    conn = sqlite3.connect('stores.db')
-    c = conn.cursor()
-    c.execute('SELECT DISTINCT row FROM stores WHERE block = ? AND row IS NOT NULL', (block,))
-    rows = sort_rows([row[0] for row in c.fetchall()])  # Сортировка рядов
+    if not block:
+        return jsonify({'rows': []})
+    
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT path FROM shops WHERE block = ?', (block,))
+    paths = [row[0] for row in cursor.fetchall()]
+    rows = sort_rows(sorted(set([extract_row(path) for path in paths if extract_row(path)])))
     conn.close()
-    print(f"Rows found: {rows}")  # Логирование
-    return jsonify(rows)
+    return jsonify({'rows': rows})
 
-@app.route('/get_stores', methods=['GET'])
+@app.route('/get_stores')
 def get_stores():
     block = request.args.get('block')
     row = request.args.get('row')
-    print(f"Fetching stores for block: {block}, row: {row}")  # Логирование
-    conn = sqlite3.connect('stores.db')
-    c = conn.cursor()
-    c.execute('SELECT DISTINCT name FROM stores WHERE block = ? AND (row = ? OR row IS NULL)', (block, row))
-    stores = sort_stores([row[0] for row in c.fetchall()])  # Сортировка магазинов
+    if not block or not row:
+        return jsonify({'stores': []})
+    
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT shop_number FROM shops WHERE block = ? AND path LIKE ?', (block, f'%Ряд {row}%'))
+    stores = sort_stores([row[0] for row in cursor.fetchall()])
     conn.close()
-    print(f"Stores found: {stores}")  # Логирование
-    return jsonify(stores)
+    return jsonify({'stores': stores})
 
-@app.route('/get_path', methods=['POST'])
+@app.route('/get_path')
 def get_path():
-    try:
-        block = request.form.get('block')
-        row = request.form.get('row')
-        store = request.form.get('store')
-        print(f"Fetching path for block: {block}, row: {row}, store: {store}")  # Логирование
-
-        if not store:
-            print("Error: 'store' parameter is missing in the request")
-            return jsonify({'error': 'Параметр store отсутствует'}), 400
-
-        conn = sqlite3.connect('stores.db')
-        c = conn.cursor()
-        query = 'SELECT path FROM stores WHERE block = ? AND (row = ? OR row IS NULL) AND name = ?'
-        c.execute(query, (block, row, store))
-        path = c.fetchone()
-        conn.close()
-
-        if path:
-            # Добавляем имя магазина к пути, если оно еще не включено
-            final_path = path[0]
-            if not final_path.endswith(store):
-                final_path = f"{final_path} > {store}"
-            print(f"Path found: {final_path}")  # Логирование
-            return jsonify({'path': final_path})
-        else:
-            print(f"No path found for block: {block}, row: {row}, store: {store}")  # Логирование
-            return jsonify({'error': 'Путь не найден'}), 404
-    except Exception as e:
-        print(f"Error in get_path: {str(e)}")  # Логирование
-        return jsonify({'error': f'Ошибка сервера: {str(e)}'}), 500
+    block = request.args.get('block')
+    row = request.args.get('row')
+    store = request.args.get('store')
+    if not block or not row or not store:
+        return jsonify({'path': ''})
+    
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT path FROM shops WHERE block = ? AND shop_number = ? AND path LIKE ?', 
+                  (block, store, f'%Ряд {row}%'))
+    result = cursor.fetchone()
+    conn.close()
+    path = result[0] if result else ''
+    if path:
+        path = f"{path} > {store}"  # Добавляем конечный магазин к пути
+    return jsonify({'path': path})
 
 if __name__ == '__main__':
     app.run(debug=True)

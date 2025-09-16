@@ -1,34 +1,68 @@
+<!-- <!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск пути магазина</title>
+  <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Поиск линий электроснабжения магазинов</h1>
+    <select id="block" class="form-select" onchange="loadRows()">
+      <option value="">Выберите блок</option>
+      {% for block in blocks %}
+      <option value="{{ block }}">{{ block }}</option>
+      {% endfor %}
+    </select>
+    <select id="row" class="form-select" onchange="loadStores()" disabled>
+      <option value="">Выберите ряд</option>
+    </select>
+    <select id="store" class="form-select" disabled>
+      <option value="">Выберите магазин</option>
+    </select>
+    <button class="form-button" onclick="getPath()">Поиск</button>
+    <div id="pathResult"></div>
+  </div>
+  <script src="/static/script.js"></script>
+</body>
+
+</html> -->
+
 <!DOCTYPE html>
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Поиск пути магазина</title>
-    <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск пути магазина</title>
+  <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-    <div class="container">
-        <h1>Поиск линий электроснабжения магазинов</h1>
-        <select id="block" class="form-select" onchange="loadRows()">
-            <option value="">Выберите блок</option>
-            {% for block in blocks %}
-            <option value="{{ block }}">{{ block }}</option>
-            {% endfor %}
-        </select>
-        <select id="row" class="form-select" onchange="loadStores()" disabled>
-            <option value="">Выберите ряд</option>
-        </select>
-        <select id="store" class="form-select" disabled>
-            <option value="">Выберите магазин</option>
-        </select>
-        <button class="form-button" onclick="getPath()">Поиск</button>
-        <div id="pathResult"></div>
-    </div>
+  <div class="container">
+    <h1>Поиск линий электроснабжения магазинов</h1>
+    <select id="block" class="form-select" onchange="loadRows()">
+      <option value="">Выберите блок</option>
+      {% for block in blocks %}
+      <option value="{{ block }}">{{ block }}</option>
+      {% endfor %}
+    </select>
+    <select id="row" class="form-select" onchange="loadStores()" disabled>
+      <option value="">Выберите ряд</option>
+    </select>
+    <select id="store" class="form-select" disabled>
+      <option value="">Выберите магазин</option>
+    </select>
+    <button class="form-button" onclick="getPath()">Поиск</button>
+    <div id="pathResult"></div>
+  </div>
 
-   <script src="/static/script.js"></script>
+  <script src="/static/script.js"></script>
 </body>
 
 </html>
