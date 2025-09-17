@@ -105,3 +105,56 @@ function getPath() {
     pathResult.innerHTML = '<p class="error">Выберите блок, ряд и магазин.</p>';
   }
 }
+
+// static/script.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Список фоновых изображений
+    const backgrounds = [
+      "/static/images/abu-saxiy1.webp", // Замените на ваши изображения
+      "/static/images/abu-saxiy2.webp", // Замените на ваши изображения
+      "/static/images/abu-saxiy3.webp", // Замените на ваши изображения
+      "/static/images/abu-saxiy4.webp", // Замените на ваши изображения
+      "/static/images/abu-saxiy5.webp",
+      "/static/images/abu-saxiy6.webp",
+      "/static/images/abu-saxiy7.webp",
+      "/static/images/abu-saxiy8.webp",
+      "/static/images/abu-saxiy9.webp",
+      "/static/images/abu-saxiy10.webp",
+      "/static/images/abu-saxiy11.webp",
+      "/static/images/abu-saxiy12.webp",
+      "/static/images/abu-saxiy13.webp",
+      "/static/images/abu-saxiy14.webp",
+      "/static/images/abu-saxiy15.webp",
+      "/static/images/abu-saxiy16.webp",
+      "/static/images/abu-saxiy17.webp",
+      "/static/images/abu-saxiy18.webp",
+      "/static/images/abu-saxiy19.webp",
+      "/static/images/abu-saxiy20.webp",
+      "/static/images/abu-saxiy21.webp",
+      "/static/images/abu-saxiy22.webp",
+      "/static/images/abu-saxiy23.webp",
+      "/static/images/abu-saxiy24.webp",
+      "/static/images/abu-saxiy25.webp",
+      "/static/images/abu-saxiy26.jpg",
+      "/static/images/abu-saxiy27.jpg",
+      "/static/images/abu-saxiy28.jpg",
+      
+
+    ];
+
+    let currentIndex = 0;
+    const backgroundElement = document.body; // Или document.querySelector('.background-container');
+
+    // Функция для смены фона
+    function changeBackground() {
+        backgroundElement.style.backgroundImage = `url('${backgrounds[currentIndex]}')`;
+        currentIndex = (currentIndex + 1) % backgrounds.length; // Циклический переход
+    }
+
+    // Начальная установка фона
+    changeBackground();
+
+    // Смена фона каждые 8 секунд
+    setInterval(changeBackground, 8000);
+});

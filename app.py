@@ -82,5 +82,7 @@ def get_path():
         path = f"{path} > {store}"  # Добавляем конечный магазин к пути
     return jsonify({'path': path})
 
+
+
 if __name__ == '__main__':
     app.run(debug=True)

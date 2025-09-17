@@ -14,11 +14,22 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url(/static/images/Abu%20saxiy%20center2.jpg);
+    background-image: url(/static/images/abu-saxiy1.webp);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in-out;
 }
+
+/* body {
+    margin: 0;
+    padding: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in-out;
+} */
 
 .container {
     max-width: 900px;
