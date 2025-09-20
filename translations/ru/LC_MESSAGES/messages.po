@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Store Path Finder\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Store Path Finder"
+msgstr "Поиск пути к магазину"
+
+msgid "Language"
+msgstr "Язык"
+
+msgid "Русский"
+msgstr "Русский"
+
+msgid "Узбекский (Кириллица)"
+msgstr "Узбекский (Кириллица)"
+
+msgid "O'zbek (Lotin)"
+msgstr "O'zbek (Lotin)"
+
+msgid "Поиск линий электроснабжения магазинов"
+msgstr "Поиск линий электроснабжения магазинов"
+
+msgid "Выберите блок"
+msgstr "Выберите блок"
+
+msgid "Выберите ряд"
+msgstr "Выберите ряд"
+
+msgid "Выберите магазин"
+msgstr "Выберите магазин"
+
+msgid "Поиск"
+msgstr "Поиск"
+
+msgid "Ошибка загрузки рядов"
+msgstr "Ошибка загрузки рядов"
+
+msgid "Ошибка загрузки магазинов"
+msgstr "Ошибка загрузки магазинов"
+
+msgid "Ошибка загрузки пути"
+msgstr "Ошибка загрузки пути"

@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Store Path Finder\n"
+"Language: uz_Cyrl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Store Path Finder"
+msgstr "Дўконга йўл топиш"
+
+msgid "Language"
+msgstr "Тил"
+
+msgid "Русский"
+msgstr "Русча"
+
+msgid "Узбекский (Кириллица)"
+msgstr "Ўзбекча (Кириллица)"
+
+msgid "O'zbek (Lotin)"
+msgstr "O‘zbekcha (Lotin)"
+
+msgid "Поиск линий электроснабжения магазинов"
+msgstr "Дўконлар электр таъминоти линияларини қидириш"
+
+msgid "Выберите блок"
+msgstr "Блокни танланг"
+
+msgid "Выберите ряд"
+msgstr "Қаторни танланг"
+
+msgid "Выберите магазин"
+msgstr "Дўконни танланг"
+
+msgid "Поиск"
+msgstr "Қидириш"
+
+msgid "Ошибка загрузки рядов"
+msgstr "Қаторларни юклаш хатоси"
+
+msgid "Ошибка загрузки магазинов"
+msgstr "Дўконларни юклаш хатоси"
+
+msgid "Ошибка загрузки пути"
+msgstr "Йўлни юклаш хатоси"

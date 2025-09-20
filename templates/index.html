@@ -1,35 +1,44 @@
 
-
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ locale }}">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Поиск пути магазина</title>
+  <title>{% trans %}Store Path Finder{% endtrans %}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
   <div class="container">
-    <h1>Поиск линий электроснабжения магазинов</h1>
-    <select id="block" class="form-select" onchange="loadRows()">
-      <option value="">Выберите блок</option>
+
+    <div class="language-selector" style="margin-bottom: 18px;">
+      <label for="languageSelect">{% trans %}   {% endtrans %}</label>
+     
+    <select id="languageSelect" onchange="changeLanguage(this.value)">
+      <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
+      <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
+      <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
+    </select>
+    </div>
+
+    <select id="block" onchange="loadRows()">
+      <option value="">{% trans %}Выберите блок{% endtrans %}</option>
       {% for block in blocks %}
       <option value="{{ block }}">{{ block }}</option>
       {% endfor %}
     </select>
-    <select id="row" class="form-select" onchange="loadStores()" disabled>
-      <option value="">Выберите ряд</option>
+    <select id="row" data-select-row="{% trans %}Выберите ряд{% endtrans %}" onchange="loadStores()" disabled>
+      <option value="">{% trans %}Выберите ряд{% endtrans %}</option>
     </select>
-    <select id="store" class="form-select" disabled>
-      <option value="">Выберите магазин</option>
+    <select id="store" data-select-store="{% trans %}Выберите магазин{% endtrans %}" onchange="getPath()" disabled>
+      <option value="">{% trans %}Выберите магазин{% endtrans %}</option>
     </select>
-    <button class="form-button" onclick="getPath()">Поиск</button>
-    <div id="pathResult"></div>
+    <div id="pathResult" data-error-rows="{% trans %}Ряды не найдены{% endtrans %}"
+      data-error-stores="{% trans %}Магазины не найдены{% endtrans %}"
+      data-error-path="{% trans %}Путь не найден{% endtrans %}"></div>
   </div>
-
   <script src="/static/script.js"></script>
 </body>
 

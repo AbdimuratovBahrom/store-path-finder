@@ -1,88 +1,98 @@
-from flask import Flask, render_template, request, jsonify
-import sqlite3
 import re
+from flask import Flask, render_template, jsonify, request, session
+from flask_babel import Babel
+import sqlite3
 
 app = Flask(__name__)
+app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+app.secret_key = 'your-secret-key'
+babel = Babel(app)
 
-def extract_row(path):
-    match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9]+)', path)
-    return match.group(1) if match else ''
 
-def sort_rows(rows):
-    # Сортировка рядов: числовые (Ряд 1, Ряд 2) по числу, буквенные (Ряд L, Ряд Q) по алфавиту
-    def key(row):
-        match = re.match(r'Ряд (\d+)', row)
-        return (0, int(match.group(1))) if match else (1, row)
-    return sorted(rows, key=key)
-
-def sort_stores(stores):
-    # Сортировка магазинов: числовые (Маг-1, Маг-1А) по числу, остальные по алфавиту
-    def key(store):
-        match = re.match(r'Маг-(\d+)([А-Яа-я]?)', store)
-        if match:
-            num = int(match.group(1))
-            suffix = match.group(2) or ''
-            return (0, num, suffix)
-        return (1, store)
-    return sorted(stores, key=key)
+@babel.localeselector
+def get_locale():
+    return session.get('lang', app.config['BABEL_DEFAULT_LOCALE'])
 
 @app.route('/')
 def index():
     conn = sqlite3.connect('shops.db')
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT block FROM shops')
-    blocks = sorted([row[0] for row in cursor.fetchall()])  # Сортировка блоков по алфавиту
+    blocks = [row[0] for row in cursor.fetchall()]
     conn.close()
-    return render_template('index.html', blocks=blocks)
+    locale = get_locale()  # Получаем текущий язык
+    return render_template('index.html', blocks=blocks, locale=locale)
 
-@app.route('/get_rows')
-def get_rows():
-    block = request.args.get('block')
-    if not block:
-        return jsonify({'rows': []})
-    
+@app.route('/get_rows/<block>')
+def get_rows(block):
     conn = sqlite3.connect('shops.db')
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT path FROM shops WHERE block = ?', (block,))
-    paths = [row[0] for row in cursor.fetchall()]
-    rows = sort_rows(sorted(set([extract_row(path) for path in paths if extract_row(path)])))
+    paths = [r[0] for r in cursor.fetchall()]
+    rows = set()
+    for path in paths:
+        match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9\-]+)', path)
+        if match:
+            rows.add(match.group(1))  # Только номер/буква ряда
+    # Для 3-блока сортируем как числа, для остальных — как строки
+    if block == "3-блок":
+        def row_key(x):
+            try:
+                return int(x)
+            except ValueError:
+                return float('inf')
+        rows = sorted(rows, key=row_key)
+    else:
+        rows = sorted(rows)
     conn.close()
-    return jsonify({'rows': rows})
+    app.logger.debug(f"Fetched rows for block {block}: {rows}")
+    return jsonify(rows)
 
-@app.route('/get_stores')
-def get_stores():
-    block = request.args.get('block')
-    row = request.args.get('row')
-    if not block or not row:
-        return jsonify({'stores': []})
-    
+@app.route('/get_stores/<block>/<row>')
+def get_stores(block, row):
     conn = sqlite3.connect('shops.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT shop_number FROM shops WHERE block = ? AND path LIKE ?', (block, f'%Ряд {row}%'))
-    stores = sort_stores([row[0] for row in cursor.fetchall()])
+    cursor.execute(
+        "SELECT DISTINCT shop_number FROM shops WHERE block = ? AND path LIKE ?",
+        (block, f"%Ряд {row}%")
+    )
+    stores = []
+    for (shop,) in cursor.fetchall():
+        # Если в shop есть хотя бы две буквы подряд — убираем "Маг-" в начале
+        if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', shop):
+            stores.append(shop[4:])  # убираем "Маг-"
+        else:
+            stores.append(shop)
     conn.close()
-    return jsonify({'stores': stores})
+    app.logger.debug(f"Fetched stores for block {block}, row {row}: {stores}")
+    return jsonify(stores)
 
-@app.route('/get_path')
-def get_path():
-    block = request.args.get('block')
-    row = request.args.get('row')
-    store = request.args.get('store')
-    if not block or not row or not store:
-        return jsonify({'path': ''})
-    
+@app.route('/get_path/<block>/<row>/<shop_number>')
+def get_path(block, row, shop_number):
     conn = sqlite3.connect('shops.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT path FROM shops WHERE block = ? AND shop_number = ? AND path LIKE ?', 
-                  (block, store, f'%Ряд {row}%'))
-    result = cursor.fetchone()
+    cursor.execute(
+        "SELECT path, shop_number FROM shops WHERE block = ? AND path LIKE ? AND shop_number = ?",
+        (block, f"%Ряд {row}%", shop_number)
+    )
+    row_db = cursor.fetchone()
     conn.close()
-    path = result[0] if result else ''
-    if path:
-        path = f"{path} > {store}"  # Добавляем конечный магазин к пути
-    return jsonify({'path': path})
+    if row_db:
+        # Если магазин начинается с Маг- и далее две буквы — не добавлять Маг-
+        if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', row_db[1]):
+            full_path = f"{row_db[0]} > {row_db[1][4:]}"
+        else:
+            full_path = f"{row_db[0]} > {row_db[1]}"
+        return jsonify({'path': full_path})
+    else:
+        return jsonify({'path': None})
 
-
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    session['lang'] = lang
+    app.logger.debug(f"Language switched to: {lang}")
+    return jsonify({'status': 'success', 'language': lang})
 
 if __name__ == '__main__':
     app.run(debug=True)
