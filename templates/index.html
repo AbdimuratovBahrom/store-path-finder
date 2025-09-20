@@ -11,17 +11,26 @@
 </head>
 
 <body>
-  <div class="container">
-
+  <div class="header">
     <div class="language-selector" style="margin-bottom: 18px;">
-      <label for="languageSelect">{% trans %}   {% endtrans %}</label>
-     
-    <select id="languageSelect" onchange="changeLanguage(this.value)">
-      <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
-      <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
-      <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
-    </select>
+      <label for="languageSelect">{% trans %} {% endtrans %}</label>
+    
+      <select id="languageSelect" onchange="changeLanguage(this.value)">
+        <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
+        <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
+        <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
+      </select>
     </div>
+
+  </div>
+  
+  
+  <div class="container">
+    <h1>
+      {% trans %}Путь электроснобжения магазина{% endtrans %}
+    </h1>
+
+    
 
     <select id="block" onchange="loadRows()">
       <option value="">{% trans %}Выберите блок{% endtrans %}</option>

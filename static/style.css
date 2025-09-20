@@ -180,8 +180,8 @@ select:focus {
      background-repeat: no-repeat;
      transition: background-image 1s ease-in-out;
  }
-
- .language-selector {
+ 
+  .language-selector {
      width: 100%;
      display: flex;
      justify-content: flex-end;
@@ -236,6 +236,9 @@ select:focus {
  }
 
  h1 {
+    display: flex;
+        justify-content: center;
+        align-items: center;
      font-size: 1.7rem;
      color: #1e40af;
      font-weight: 700;
