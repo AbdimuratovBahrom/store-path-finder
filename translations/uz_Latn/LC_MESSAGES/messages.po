@@ -43,3 +43,6 @@ msgstr "Do‘konlarni yuklash xatosi"
 
 msgid "Ошибка загрузки пути"
 msgstr "Yo‘lni yuklash xatosi"
+
+msgid "Блоки 1,2,3"
+msgstr "Bloklar 1,2,3"

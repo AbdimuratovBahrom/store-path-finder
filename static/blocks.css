@@ -1,0 +1,37 @@
+
+body {
+  font-family: Arial, sans-serif;
+  color: rgb(46, 33, 224);
+  margin: 20px;
+  background-color: #f9f9f9;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.blocks {
+  text-align: center;
+  
+}
+
+.tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+}
+
+
+area {
+  cursor: pointer;
+}
+

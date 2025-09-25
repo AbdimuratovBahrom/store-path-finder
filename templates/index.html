@@ -8,6 +8,7 @@
   <title>{% trans %}Store Path Finder{% endtrans %}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/block.css">
 </head>
 
 <body>
@@ -27,7 +28,7 @@
   
   <div class="container">
     <h1>
-      {% trans %}Путь электроснобжения магазина{% endtrans %}
+      {% trans %}Поиск линий электроснабжения магазинов{% endtrans %}
     </h1>
 
     
@@ -47,8 +48,17 @@
     <div id="pathResult" data-error-rows="{% trans %}Ряды не найдены{% endtrans %}"
       data-error-stores="{% trans %}Магазины не найдены{% endtrans %}"
       data-error-path="{% trans %}Путь не найден{% endtrans %}"></div>
+
   </div>
+
+  <div class="case">
+    <a target="_blank" href="/blocks.html">{% trans %}Блоки 1,2,3{% endtrans %}</a>
+  </div>
+
+  
+ 
   <script src="/static/script.js"></script>
 </body>
 
 </html>
+
