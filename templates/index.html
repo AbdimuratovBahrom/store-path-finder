@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="{{ locale }}">
 
@@ -8,14 +7,14 @@
   <title>{% trans %}Store Path Finder{% endtrans %}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="../static/style.css">
-  
+
 </head>
 
 <body>
   <div class="header">
     <div class="language-selector" style="margin-bottom: 18px;">
       <label for="languageSelect">{% trans %} {% endtrans %}</label>
-    
+
       <select id="languageSelect" onchange="changeLanguage(this.value)">
         <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
         <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
@@ -24,14 +23,14 @@
     </div>
 
   </div>
-  
-  
+
+
   <div class="container">
     <h1>
       {% trans %}Поиск линий электроснабжения магазинов{% endtrans %}
     </h1>
 
-    
+
 
     <select id="block" onchange="loadRows()">
       <option value="">{% trans %}Выберите блок{% endtrans %}</option>
@@ -52,13 +51,12 @@
   </div>
 
   <div class="case">
-    <a target="_blank" href="../templates/blocks.html">{% trans %}Блоки 1,2,3{% endtrans %}</a>
+    <a target="_blank" href="/templates/blocks.html">Блоки 1,2,3</a>
   </div>
 
-  
- 
+
+
   <script src="/static/script.js"></script>
 </body>
 
 </html>
-
