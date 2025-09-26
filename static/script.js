@@ -162,4 +162,4 @@ const images = [
 setInterval(() => {
   document.body.style.backgroundImage = `url(${images[imageIndex]})`;
   imageIndex = (imageIndex + 1) % images.length;
-}, 5000);
+}, 10000);
