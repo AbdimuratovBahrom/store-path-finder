@@ -23,17 +23,7 @@ sqlite> .exit
 (myenv) C:\Users\user\store-path-finder>python test_db.py
 (myenv) C:\Users\user\store-path-finder>python app.py
 
-cd C:\Users\user\store-path-finder
-myenv\Scripts\activate
-del shops.db
 
-python init_db.py
-dir shops.db
-python test_db.py
-python app.py
-
-
-http://127.0.0.1:5000/
 
 
 (myenv) C:\Users\user\store-path-finder>python init_db.py
@@ -105,3 +95,13 @@ python app.py
 
 
 http://127.0.0.1:5000/
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+del shops.db
+
+
+python init_db.py
+dir shops.db
+python test_db.py
+python app.py
