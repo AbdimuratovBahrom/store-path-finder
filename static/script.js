@@ -1,10 +1,44 @@
+
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("toggle-blocks");
+  const container = document.querySelector(".container");
+  const caseBlock = document.querySelector(".case");
+
+  if (!btn) {
+    console.warn("Toggle button not found (#toggle-blocks).");
+    return;
+  }
+
+  // Берём переводы из data-атрибутов (вставленные сервером через {% trans %})
+  const hideText =
+    btn.dataset.hide || btn.getAttribute("data-hide") || "Скрыть блоки";
+  const showText =
+    btn.dataset.show || btn.getAttribute("data-show") || "Показать блоки";
+
+  // Установим начальный текст (чтобы язык всегда был корректным)
+  btn.textContent = hideText;
+
+  btn.addEventListener("click", function () {
+    if (container) container.classList.toggle("hidden-block");
+    if (caseBlock) caseBlock.classList.toggle("hidden-block");
+
+    const isHidden =
+      container &&
+      container.classList.contains("hidden-block") &&
+      caseBlock &&
+      caseBlock.classList.contains("hidden-block");
+
+    btn.textContent = isHidden ? showText : hideText;
+  });
+});
+
+
+
 function changeLanguage(lang) {
   fetch(`/set_language/${lang}`).then(() => {
     window.location.reload();
   });
 }
-
-
 
 function updateFlag(lang) {
   const select = document.getElementById("languageSelect");
@@ -27,8 +61,6 @@ document.addEventListener("DOMContentLoaded", function () {
       updateFlag(this.value);
     });
 });
-
-
 
 function loadRows() {
   const blockSelect = document.getElementById("block");
@@ -95,7 +127,6 @@ function loadStores() {
   }
 }
 
-// ...existing code...
 function getPath() {
   const blockSelect = document.getElementById("block");
   const rowSelect = document.getElementById("row");
@@ -162,4 +193,6 @@ const images = [
 setInterval(() => {
   document.body.style.backgroundImage = `url(${images[imageIndex]})`;
   imageIndex = (imageIndex + 1) % images.length;
-}, 10000);
+}, 15000);
+
+

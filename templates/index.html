@@ -7,11 +7,14 @@
   <title>{% trans %}Store Path Finder{% endtrans %}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="../static/style.css">
+ 
 
 </head>
 
 <body>
   <div class="header">
+      
+
     <div class="language-selector" style="margin-bottom: 18px;">
       <label for="languageSelect">{% trans %} {% endtrans %}</label>
 
@@ -20,9 +23,24 @@
         <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
         <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
       </select>
+
+
+      
     </div>
+  <div class="toggle-btn">
+    <button id="toggle-blocks" data-show="{% trans %}Показать блоки{% endtrans %}"
+      data-hide="{% trans %}Скрыть блоки{% endtrans %}">
+      {% trans %}Скрыть блоки{% endtrans %}
+    </button>
+  </div>
+
+ 
+
 
   </div>
+
+
+
 
 
   <div class="container">
@@ -51,12 +69,14 @@
   </div>
 
   <div class="case">
-    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">Блоки 1,2,3</a>
+    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">{% trans %}Блоки 1,2,3{% endtrans %}</a>
   </div>
 
 
 
   <script src="/static/script.js"></script>
+  
+  
 </body>
 
 </html>

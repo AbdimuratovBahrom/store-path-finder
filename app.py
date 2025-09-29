@@ -1,7 +1,7 @@
 import re
-from flask import Flask, render_template, jsonify, request, session
-from flask_babel import Babel
 import sqlite3
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask_babel import Babel, gettext as _
 
 app = Flask(__name__)
 app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
@@ -12,7 +12,9 @@ babel = Babel(app)
 
 @babel.localeselector
 def get_locale():
+    # Язык из сессии, иначе русский
     return session.get('lang', app.config['BABEL_DEFAULT_LOCALE'])
+
 
 @app.route('/')
 def index():
@@ -21,8 +23,17 @@ def index():
     cursor.execute('SELECT DISTINCT block FROM shops')
     blocks = [row[0] for row in cursor.fetchall()]
     conn.close()
-    locale = get_locale()  # Получаем текущий язык
+    locale = get_locale()
     return render_template('index.html', blocks=blocks, locale=locale)
+
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in ['ru', 'uz_Cyrl', 'uz_Latn']:
+        session['lang'] = lang
+        app.logger.debug(f"Language switched to: {lang}")
+    return redirect(url_for('index'))
+
 
 @app.route('/get_rows/<block>')
 def get_rows(block):
@@ -34,8 +45,7 @@ def get_rows(block):
     for path in paths:
         match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9\-]+)', path)
         if match:
-            rows.add(match.group(1))  # Только номер/буква ряда
-    # Для 3-блока сортируем как числа, для остальных — как строки
+            rows.add(match.group(1))
     if block == "3-блок":
         def row_key(x):
             try:
@@ -46,8 +56,8 @@ def get_rows(block):
     else:
         rows = sorted(rows)
     conn.close()
-    app.logger.debug(f"Fetched rows for block {block}: {rows}")
     return jsonify(rows)
+
 
 @app.route('/get_stores/<block>/<row>')
 def get_stores(block, row):
@@ -59,14 +69,13 @@ def get_stores(block, row):
     )
     stores = []
     for (shop,) in cursor.fetchall():
-        # Если в shop есть хотя бы две буквы подряд — убираем "Маг-" в начале
         if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', shop):
-            stores.append(shop[4:])  # убираем "Маг-"
+            stores.append(shop[4:])
         else:
             stores.append(shop)
     conn.close()
-    app.logger.debug(f"Fetched stores for block {block}, row {row}: {stores}")
     return jsonify(stores)
+
 
 @app.route('/get_path/<block>/<row>/<shop_number>')
 def get_path(block, row, shop_number):
@@ -79,7 +88,6 @@ def get_path(block, row, shop_number):
     row_db = cursor.fetchone()
     conn.close()
     if row_db:
-        # Если магазин начинается с Маг- и далее две буквы — не добавлять Маг-
         if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', row_db[1]):
             full_path = f"{row_db[0]} > {row_db[1][4:]}"
         else:
@@ -88,11 +96,6 @@ def get_path(block, row, shop_number):
     else:
         return jsonify({'path': None})
 
-@app.route('/set_language/<lang>')
-def set_language(lang):
-    session['lang'] = lang
-    app.logger.debug(f"Language switched to: {lang}")
-    return jsonify({'status': 'success', 'language': lang})
 
 if __name__ == '__main__':
     app.run(debug=True)

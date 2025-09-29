@@ -82,6 +82,7 @@ python test_db.py
 python app.py
 
 
+pybabel compile -d translations
 
 
 cd C:\Users\user\store-path-finder
