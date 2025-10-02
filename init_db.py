@@ -1,71 +1,63 @@
 import sqlite3
-import logging
+from block1_data import get_block1_data
+from block2_data import get_block2_data
+from block3_data import get_block3_data
+from block38_data import get_block38_data
+from blockGiper_data import get_blockGiper_data
 
-# Настройка логирования
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+conn = sqlite3.connect("shops.db")
+cursor = conn.cursor()
 
-# Импорт данных с проверкой переменных или функций
-def get_data(module_name, data_name, func_name):
-    try:
-        module = __import__(module_name)
-        if hasattr(module, func_name):
-            logger.debug(f"Using function {func_name} from {module_name}")
-            return getattr(module, func_name)()
-        elif hasattr(module, data_name):
-            logger.debug(f"Using variable {data_name} from {module_name}")
-            return getattr(module, data_name)
-        else:
-            raise ImportError(f"Neither {data_name} nor {func_name} found in {module_name}")
-    except ImportError as e:
-        logger.error(f"Import error for {module_name}: {e}")
-        raise
+# Создаём таблицу
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS shops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    block TEXT,
+    row TEXT,
+    shop_number TEXT,
+    path TEXT
+)
+""")
 
-def init_db():
-    logger.debug("Initializing database...")
-    conn = sqlite3.connect('shops.db')
-    cursor = conn.cursor()
-    
-    # Создание таблицы
-    cursor.execute('''CREATE TABLE IF NOT EXISTS shops (
-        block TEXT,
-        shop_number TEXT,
-        path TEXT
-    )''')
-    logger.debug("Table 'shops' created or already exists")
-    
-    # Очистка таблицы
-    cursor.execute('DELETE FROM shops')
-    logger.debug("Table 'shops' cleared")
-    
-    # Вставка данных
-    for block, module_name in [
-        ('1-блок', 'block1_data'),
-        ('2-блок', 'block2_data'),
-        ('3-блок', 'block3_data'),
-        ('38-склад', 'block38_data')
-    ]:
-        try:
-            data = get_data(module_name, f"{module_name}", f"get_{module_name}")
-            logger.debug(f"Data for block {block}: {data[:5]}")  # Логируем первые 5 записей
-            for entry in data:
-                path = entry['path']
-                for shop_number in entry['shops']:
-                    cursor.execute(
-                        'INSERT INTO shops (block, shop_number, path) VALUES (?, ?, ?)',
-                        (block, shop_number, path)
-                    )
-            logger.debug(f"Inserted data for block: {block}")
-        except Exception as e:
-            logger.error(f"Error inserting data for block {block}: {e}")
+# Очистим
+cursor.execute("DELETE FROM shops")
 
-    conn.commit()
-    logger.debug("Database changes committed")
-    conn.close()
-    logger.debug("Database connection closed")
+def insert_block(block_name, data_func):
+    """ Для блоков 1,2,3,38 — вставка с выделением ряда """
+    for entry in data_func():
+        path = entry["path"]
+        shops = entry["shops"]
 
-    import re
+        # вытащим ряд (после слова 'Ряд ...')
+        row_name = None
+        parts = path.split(">")
+        for part in parts:
+            part = part.strip()
+            if part.startswith("Ряд"):
+                row_name = part.replace("Ряд", "").strip()
+                break
 
+        for shop in shops:
+            cursor.execute(
+                "INSERT INTO shops (block, row, shop_number, path) VALUES (?, ?, ?, ?)",
+                (block_name, row_name, shop, path)
+            )
 
-if __name__ == '__main__':
-    init_db()
+# Заполняем блоки
+insert_block("1-блок", get_block1_data)
+insert_block("2-блок", get_block2_data)
+insert_block("3-блок", get_block3_data)
+insert_block("38-склад", get_block38_data)
+
+# Гипермаркет — тут ряд не нужен
+for entry in get_blockGiper_data():
+    path = entry["path"]
+    for shop in entry["shops"]:
+        cursor.execute(
+            "INSERT INTO shops (block, row, shop_number, path) VALUES (?, ?, ?, ?)",
+            ("Гипермаркет", None, shop, path)
+        )
+
+conn.commit()
+conn.close()
+print("✅ Database initialized with all blocks and Гипермаркет.")

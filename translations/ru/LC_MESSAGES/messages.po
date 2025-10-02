@@ -1,40 +1,40 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: store-path-finder 1.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 12:00+0000\n"
-"PO-Revision-Date: 2025-09-29 12:00+0000\n"
-"Last-Translator: YOU <you@example.com>\n"
-"Language-Team: Russian\n"
 "Language: ru\n"
-"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 
-#: templates/index.html:5
+msgid "Поиск магазина"
+msgstr "Поиск магазина"
+
+msgid "Введите номер или название..."
+msgstr "Введите номер или название..."
+
 msgid "Поиск линий электроснабжения магазинов"
 msgstr "Поиск линий электроснабжения магазинов"
 
-#: templates/index.html:6
-msgid "Скрыть блоки"
-msgstr "Скрыть блоки"
-
-#: templates/index.html:7
 msgid "Выберите блок"
 msgstr "Выберите блок"
 
-#: templates/index.html:8
 msgid "Выберите ряд"
 msgstr "Выберите ряд"
 
-#: templates/index.html:9
 msgid "Выберите магазин"
 msgstr "Выберите магазин"
 
-#: templates/index.html:10
+msgid "Ряды не найдены"
+msgstr "Ряды не найдены"
+
+msgid "Магазины не найдены"
+msgstr "Магазины не найдены"
+
+msgid "Путь не найден"
+msgstr "Путь не найден"
+
 msgid "Блоки 1,2,3"
 msgstr "Блоки 1,2,3"
 
-#: templates/index.html:11
 msgid "Показать блоки"
 msgstr "Показать блоки"
+
+msgid "Скрыть блоки"
+msgstr "Скрыть блоки"

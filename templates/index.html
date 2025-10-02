@@ -1,82 +1,82 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}">
+<html lang="{{ get_locale() }}">
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% trans %}Store Path Finder{% endtrans %}</title>
+  <title>{{ _('Поиск магазина') }}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
-  <link rel="stylesheet" href="../static/style.css">
- 
-
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
   <div class="header">
-      
-
-    <div class="language-selector" style="margin-bottom: 18px;">
-      <label for="languageSelect">{% trans %} {% endtrans %}</label>
-
-      <select id="languageSelect" onchange="changeLanguage(this.value)">
-        <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
-        <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
-        <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
+    <!-- выбор языка -->
+    <div class="language-selector">
+      <select id="languageSelect">
+        <option value="ru" {% if get_locale()=='ru' %}selected{% endif %}>RU</option>
+        <option value="uz_Latn" {% if get_locale()=='uz_Latn' %}selected{% endif %}>O‘z</option>
+        <option value="uz_Cyrl" {% if get_locale()=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
       </select>
 
-
-      
     </div>
-  <div class="toggle-btn">
-    <button id="toggle-blocks" data-show="{% trans %}Показать блоки{% endtrans %}"
-      data-hide="{% trans %}Скрыть блоки{% endtrans %}">
-      {% trans %}Скрыть блоки{% endtrans %}
-    </button>
+
+    <!-- кнопка скрыть/показать -->
+    <div class="toggle-btn">
+      <button id="toggle-btn" type="button" data-hide="{{ _('Скрыть блоки') }}" data-show="{{ _('Показать блоки') }}"
+        aria-expanded="true">
+        {{ _('Скрыть блоки') }}
+      </button>
+    </div>
   </div>
 
- 
-
-
-  </div>
 
 
 
 
 
+  <!-- форма выбора блоков -->
+<div id="blocks-container" class="blocks-visible">
   <div class="container">
-    <h1>
-      {% trans %}Поиск линий электроснабжения магазинов{% endtrans %}
-    </h1>
+    <h1>{% trans %}Поиск линий электроснабжения магазинов{% endtrans %}</h1>
 
+      <select id="block" onchange="loadRows()">
+        <option value="">{% trans %}Выберите блок{% endtrans %}</option>
+        {% for block in blocks %}
+        <option value="{{ block }}">{{ block }}</option>
+        {% endfor %}
+      </select>
 
+      <select id="row" onchange="loadStores()" disabled>
+        <option value="">{% trans %}Выберите ряд{% endtrans %}</option>
+      </select>
 
-    <select id="block" onchange="loadRows()">
-      <option value="">{% trans %}Выберите блок{% endtrans %}</option>
-      {% for block in blocks %}
-      <option value="{{ block }}">{{ block }}</option>
-      {% endfor %}
-    </select>
-    <select id="row" data-select-row="{% trans %}Выберите ряд{% endtrans %}" onchange="loadStores()" disabled>
-      <option value="">{% trans %}Выберите ряд{% endtrans %}</option>
-    </select>
-    <select id="store" data-select-store="{% trans %}Выберите магазин{% endtrans %}" onchange="getPath()" disabled>
-      <option value="">{% trans %}Выберите магазин{% endtrans %}</option>
-    </select>
-    <div id="pathResult" data-error-rows="{% trans %}Ряды не найдены{% endtrans %}"
-      data-error-stores="{% trans %}Магазины не найдены{% endtrans %}"
-      data-error-path="{% trans %}Путь не найден{% endtrans %}"></div>
+      <select id="store" onchange="getPath()" disabled>
+        <option value="">{% trans %}Выберите магазин{% endtrans %}</option>
+      </select>
 
+      <div id="pathResult"></div>
+    </div>
   </div>
+
+  <!-- быстрый поиск -->
+  <div class="search-form">
+    <form id="search-form" action="/search" method="get">
+      <input type="text" id="keyword" name="keyword"
+        placeholder="{% trans %}Введите номер или название...{% endtrans %}">
+      <button type="submit">🔍</button>
+    </form>
+  </div>
+
+  <div id="search-results"></div>
 
   <div class="case">
-    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">{% trans %}Блоки 1,2,3{% endtrans %}</a>
+    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">
+      {% trans %}Блоки 1,2,3{% endtrans %}
+    </a>
   </div>
 
-
-
+  
   <script src="/static/script.js"></script>
-  
-  
 </body>
 
 </html>

@@ -1,40 +1,40 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: store-path-finder 1.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 12:00+0000\n"
-"PO-Revision-Date: 2025-09-29 12:00+0000\n"
-"Last-Translator: YOU <you@example.com>\n"
-"Language-Team: Uzbek (Latin)\n"
-"Language: uz_Latn\n"
-"MIME-Version: 1.0\n"
+"Language: uz\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 
-#: templates/index.html:5
+msgid "Поиск магазина"
+msgstr "Do'kon yo‘lini topuvchi"
+
+msgid "Введите номер или название..."
+msgstr "Raqam yoki nom kiriting..."
+
 msgid "Поиск линий электроснабжения магазинов"
 msgstr "Do‘konlar elektr ta'minoti liniyalarini qidirish"
 
-#: templates/index.html:6
-msgid "Скрыть блоки"
-msgstr "Bloklarni yashirish"
-
-#: templates/index.html:7
 msgid "Выберите блок"
 msgstr "Blokni tanlang"
 
-#: templates/index.html:8
 msgid "Выберите ряд"
 msgstr "Qatorni tanlang"
 
-#: templates/index.html:9
 msgid "Выберите магазин"
 msgstr "Do‘konni tanlang"
 
-#: templates/index.html:10
-msgid "Блоки 1,2,3"
-msgstr "Bloklar 1,2,3"
+msgid "Ряды не найдены"
+msgstr "Qatorlar topilmadi"
 
-#: templates/index.html:6
+msgid "Магазины не найдены"
+msgstr "Do‘konlar topilmadi"
+
+msgid "Путь не найден"
+msgstr "Yo‘l topilmadi"
+
+msgid "Блоки 1,2,3"
+msgstr "1,2,3-bloklar"
+
 msgid "Показать блоки"
 msgstr "Bloklarni ko‘rsatish"
+
+msgid "Скрыть блоки"
+msgstr "Bloklarni yashirish"

@@ -97,3 +97,904 @@ def set_language(lang):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
+    import sqlite3
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Импорт данных с проверкой переменных или функций
+def get_data(module_name, data_name, func_name):
+    try:
+        module = __import__(module_name)
+        if hasattr(module, func_name):
+            logger.debug(f"Using function {func_name} from {module_name}")
+            return getattr(module, func_name)()
+        elif hasattr(module, data_name):
+            logger.debug(f"Using variable {data_name} from {module_name}")
+            return getattr(module, data_name)
+        else:
+            raise ImportError(f"Neither {data_name} nor {func_name} found in {module_name}")
+    except ImportError as e:
+        logger.error(f"Import error for {module_name}: {e}")
+        raise
+
+def init_db():
+    logger.debug("Initializing database...")
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    
+    # Создание таблицы
+    cursor.execute('''CREATE TABLE IF NOT EXISTS shops (
+        block TEXT,
+        shop_number TEXT,
+        path TEXT
+    )''')
+    logger.debug("Table 'shops' created or already exists")
+    
+    # Очистка таблицы
+    cursor.execute('DELETE FROM shops')
+    logger.debug("Table 'shops' cleared")
+    
+    # Вставка данных
+    for block, module_name in [
+        ('1-блок', 'block1_data'),
+        ('2-блок', 'block2_data'),
+        ('3-блок', 'block3_data'),
+        ('38-склад', 'block38_data')
+    ]:
+        try:
+            data = get_data(module_name, f"{module_name}", f"get_{module_name}")
+            logger.debug(f"Data for block {block}: {data[:5]}")  # Логируем первые 5 записей
+            for entry in data:
+                path = entry['path']
+                for shop_number in entry['shops']:
+                    cursor.execute(
+                        'INSERT INTO shops (block, shop_number, path) VALUES (?, ?, ?)',
+                        (block, shop_number, path)
+                    )
+            logger.debug(f"Inserted data for block: {block}")
+        except Exception as e:
+            logger.error(f"Error inserting data for block {block}: {e}")
+
+    conn.commit()
+    logger.debug("Database changes committed")
+    conn.close()
+    logger.debug("Database connection closed")
+
+    import re
+
+
+if __name__ == '__main__':
+    init_db()
+
+
+
+
+
+
+
+
+    import sqlite3
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+DB_PATH = "shops.db"
+
+def init_db():
+    logger.debug("Initializing database...")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Создание таблицы
+    cursor.execute('''CREATE TABLE IF NOT EXISTS shops (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        block TEXT,
+        shop_number TEXT,
+        path TEXT
+    )''')
+    logger.debug("Table 'shops' created or already exists")
+    
+    # Очистка таблицы
+    cursor.execute('DELETE FROM shops')
+    logger.debug("Table 'shops' cleared")
+    
+    # 🔹 Примерные тестовые данные (можно заменить на твои модули block1_data и т.д.)
+    data = [
+        ("1-блок", "19", "ТП-6699 > Т1 > ВРУ4 > ЩР2 > 1-блок > Ряд D > ЯРВ7(D) > ШО-D22"),
+        ("2-блок", "33", "ТП-6699 > Т1 > 2-блок шитовой > Шит-6 > 2-блок > Ряд P > ШО-2"),
+        ("2-блок", "3",  "ТП-6699 > Т1 > 2-блок шитовой > Шит-3 > 2-блок > Ряд J > РЩ-J1 > ШО-3"),
+        ("2-блок", "3",  "ТП-6699 > Т1 > 2-блок шитовой > Шит-7 > 2-блок > Ряд G > РЩ-G1 > ШО-3"),
+        ("3-блок", "10", "ТП-4768 > Т1 > АВР(ЩР12) > 3-блок > ЩР12 > Ряд 1 > ШО-10"),
+    ]
+    
+    cursor.executemany(
+        "INSERT INTO shops (block, shop_number, path) VALUES (?, ?, ?)", data
+    )
+    logger.debug(f"Inserted {len(data)} records into 'shops'")
+    
+    conn.commit()
+    logger.debug("Database changes committed")
+    conn.close()
+    logger.debug("Database connection closed")
+
+
+if __name__ == '__main__':
+    init_db()
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import re
+
+from block1_data import get_block1_data
+from block2_data import block2_data   # тут просто список
+from block3_data import get_block3_data
+from block38_data import get_block38_data
+
+DB_PATH = "shops.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Создание таблицы
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS shops (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            block TEXT,
+            row TEXT,
+            shop_number TEXT,
+            path TEXT
+        )
+    ''')
+
+    # Очистка таблицы
+    cursor.execute('DELETE FROM shops')
+
+    # Собираем данные
+    blocks_data = [
+        ("1-блок", get_block1_data()),
+        ("2-блок", block2_data),   # список напрямую
+        ("3-блок", get_block3_data()),
+        ("38-склад", get_block38_data()),
+    ]
+
+    for block_name, data in blocks_data:
+        for entry in data:
+            path = entry['path']
+            shops = entry['shops']
+
+            # ищем ряд
+            row_match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9\-]+)', path)
+            row = row_match.group(1) if row_match else None
+
+            for shop in shops:
+                cursor.execute(
+                    "INSERT INTO shops (block, row, shop_number, path) VALUES (?, ?, ?, ?)",
+                    (block_name, row, str(shop), path)
+                )
+
+    conn.commit()
+    conn.close()
+    print("✅ Database initialized successfully.")
+
+if __name__ == "__main__":
+    init_db()
+
+
+
+
+
+
+import re
+import sqlite3
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from flask_babel import Babel, gettext as _
+
+app = Flask(__name__)
+app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+app.secret_key = 'your-secret-key'
+babel = Babel(app)
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS stores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            path TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+
+@babel.localeselector
+def get_locale():
+    # Язык из сессии, иначе русский
+    return session.get('lang', app.config['BABEL_DEFAULT_LOCALE'])
+
+
+@app.route('/')
+def index():
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT block FROM shops')
+    blocks = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    locale = get_locale()
+    return render_template('index.html', blocks=blocks, locale=locale)
+
+
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    if lang in ['ru', 'uz_Cyrl', 'uz_Latn']:
+        session['lang'] = lang
+        app.logger.debug(f"Language switched to: {lang}")
+    return redirect(url_for('index'))
+
+
+@app.route('/get_rows/<block>')
+def get_rows(block):
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT path FROM shops WHERE block = ?', (block,))
+    paths = [r[0] for r in cursor.fetchall()]
+    rows = set()
+    for path in paths:
+        match = re.search(r'Ряд\s+([A-Za-zА-Яа-я0-9\-]+)', path)
+        if match:
+            rows.add(match.group(1))
+    if block == "3-блок":
+        def row_key(x):
+            try:
+                return int(x)
+            except ValueError:
+                return float('inf')
+        rows = sorted(rows, key=row_key)
+    else:
+        rows = sorted(rows)
+    conn.close()
+    return jsonify(rows)
+
+
+@app.route('/get_stores/<block>/<row>')
+def get_stores(block, row):
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT DISTINCT shop_number FROM shops WHERE block = ? AND path LIKE ?",
+        (block, f"%Ряд {row}%")
+    )
+    stores = []
+    for (shop,) in cursor.fetchall():
+        if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', shop):
+            stores.append(shop[4:])
+        else:
+            stores.append(shop)
+    conn.close()
+    return jsonify(stores)
+
+
+@app.route('/get_path/<block>/<row>/<shop_number>')
+def get_path(block, row, shop_number):
+    conn = sqlite3.connect('shops.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT path, shop_number FROM shops WHERE block = ? AND path LIKE ? AND shop_number = ?",
+        (block, f"%Ряд {row}%", shop_number)
+    )
+    row_db = cursor.fetchone()
+    conn.close()
+    if row_db:
+        if re.match(r'^Маг-[A-Za-zА-Яа-я]{2,}', row_db[1]):
+            full_path = f"{row_db[0]} > {row_db[1][4:]}"
+        else:
+            full_path = f"{row_db[0]} > {row_db[1]}"
+        return jsonify({'path': full_path})
+    else:
+        return jsonify({'path': None})
+
+
+# 🔥 Вынесенная функция для вариантов букв
+def _letter_variants(s: str):
+    """Вернёт набор вариантов строки s: оригинал, upper, lower и варианты замены латиница<->кириллица."""
+    s = s.strip()
+    if not s:
+        return {s}
+
+    variants = set([s, s.lower(), s.upper()])
+
+    lat_to_cyr = {
+        'A': 'А', 'B': 'В', 'C': 'С', 'E': 'Е', 'H': 'Н',
+        'K': 'К', 'M': 'М', 'O': 'О', 'P': 'Р', 'T': 'Т',
+        'X': 'Х', 'Y': 'У', 'D': 'Д', 'G': 'Г', 'I': 'І', 'R': 'Р'
+    }
+    cyr_to_lat = {v: k for k, v in lat_to_cyr.items()}
+
+    s_up = s.upper()
+    mapped_to_cyr = ''.join(lat_to_cyr.get(ch, ch) for ch in s_up)
+    mapped_to_lat = ''.join(cyr_to_lat.get(ch, ch) for ch in s_up)
+
+    variants.update({mapped_to_cyr, mapped_to_cyr.lower(), mapped_to_cyr.upper()})
+    variants.update({mapped_to_lat, mapped_to_lat.lower(), mapped_to_lat.upper()})
+
+    return {v for v in variants if v}
+
+
+
+DB_PATH = "data/stores.db"
+
+
+@app.route("/search")
+def search():
+    keyword = request.args.get("keyword", "").strip()
+    results = []
+
+    # Проверка формата "Блок-Ряд-Магазин" (например: 1-R-22, 2-Р-33, 3-7-15)
+    m = re.match(r'^\s*(\d+)[\-\s–—]+([A-Za-zА-Яа-яЁё0-9]+)[\-\s–—]+(\d+)\s*$', keyword)
+    if m:
+        block, row_raw, shop = m.groups()
+
+        # --- блок ---
+        block_patterns = [
+            f"%{block}-блок%",
+            f"%{block} блок%",
+            f"%{block}блок%",
+            f"%{block}-block%",
+            f"%{block} block%",
+            f"%{block}block%"
+        ]
+
+        # --- ряд ---
+        row_patterns = []
+        if row_raw.isdigit():
+            row_patterns = [
+                f"%Ряд {row_raw}%",
+                f"%ряд {row_raw}%",
+                f"% {row_raw} %",
+                f"% {row_raw}-%"
+            ]
+        else:
+            for v in _letter_variants(row_raw):
+                row_patterns.extend([
+                    f"%Ряд {v}%",
+                    f"%ряд {v}%",
+                    f"%{v}%",
+                    f"%({v})%",
+                    f"%{v} )%"
+                ])
+
+        # --- магазин ---
+        shop_patterns = [
+            f"% {shop}",
+            f">%{shop}",
+            f"%ШО-%{shop}%",
+            f"% {shop} %"
+        ]
+
+        # ✅ собираем условия отдельно
+        block_cond = " OR ".join(["path LIKE ?"] * len(block_patterns))
+        row_cond   = " OR ".join(["path LIKE ?"] * len(row_patterns))
+        shop_cond  = " OR ".join(["path LIKE ?"] * len(shop_patterns))
+
+        query = f"""
+            SELECT path FROM stores
+            WHERE ({block_cond})
+              AND ({row_cond})
+              AND ({shop_cond})
+        """
+
+        params = block_patterns + row_patterns + shop_patterns
+
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute(query, params)
+        results = [row["path"] for row in cur.fetchall()]
+        conn.close()
+
+    return render_template("search_results.html", results=results, keyword=keyword)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+@app.route("/search")
+def search():
+    keyword = request.args.get("keyword", "").strip()
+    results = []
+
+    if not keyword:
+        return render_template("search.html", results=[], keyword=keyword)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- проверяем, не гипермаркет ли ---
+    cursor.execute("SELECT block FROM shops WHERE shop_number = ?", (keyword,))
+    row = cursor.fetchone()
+    if row and row[0] == "Гипермаркет":
+        cursor.execute(
+            "SELECT block, row, shop_number, path FROM shops WHERE shop_number = ? AND block = 'Гипермаркет'",
+            (keyword,)
+        )
+        results = cursor.fetchall()
+        conn.close()
+        return render_template("search.html", results=results, keyword=keyword)
+
+    # --- стандартный поиск для блоков 1,2,3,38 ---
+    import re
+    m = re.match(r'^\s*(\d+)[\-\s–—]+([A-Za-zА-Яа-яЁё0-9]+)[\-\s–—]+(\d+)\s*$', keyword)
+    if m:
+        block, row_raw, shop = m.groups()
+        shop_pattern = f"%{shop}%"
+
+        # блок
+        block_patterns = [
+            f"%{block}-блок%", f"%{block} блок%", f"%{block}блок%",
+            f"%{block}-block%", f"%{block} block%", f"%{block}block%"
+        ]
+
+        # ряд
+        row_patterns = set()
+        if row_raw.isdigit():
+            row_patterns.update([
+                f"%Ряд {row_raw}%", f"%ряд {row_raw}%", f"% {row_raw} %", f"% {row_raw}-%"
+            ])
+        else:
+            # буква (латиница/кириллица)
+            variants = _letter_variants(row_raw)
+            for v in variants:
+                row_patterns.update([
+                    f"%Ряд {v}%", f"%ряд {v}%", f"%{v}%", f"%({v})%", f"%{v} )%"
+                ])
+
+            query = f"""
+            SELECT block, row, shop_number, path
+            FROM shops
+            WHERE ({" OR ".join(["path LIKE ?"] * len(block_patterns))})
+              AND ({" OR ".join(["path LIKE ?"] * len(row_patterns))})
+              AND shop_number LIKE ?
+        """
+
+        params = block_patterns + list(row_patterns) + [shop_pattern]
+
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+    else:
+        # общий поиск
+        cursor.execute(
+            "SELECT block, row, shop_number, path FROM shops WHERE path LIKE ? OR shop_number LIKE ?",
+            (f"%{keyword}%", f"%{keyword}%")
+        )
+        results = cursor.fetchall()
+
+    conn.close()
+    return render_template("search.html", results=results, keyword=keyword)
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% trans %}Store Path Finder{% endtrans %}</title>
+  <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
+  <link rel="stylesheet" href="../static/style.css">
+ 
+
+</head>
+
+<body>
+  <div class="header">
+      
+
+    <div class="language-selector" style="margin-bottom: 18px;">
+      <label for="languageSelect">{% trans %} {% endtrans %}</label>
+
+      <select id="languageSelect" onchange="changeLanguage(this.value)">
+        <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
+        <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>O‘z</option>
+        <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>Ўз</option>
+      </select>
+
+
+      
+    </div>
+  <div class="toggle-btn">
+    <button id="toggle-blocks" data-show="{% trans %}Показать блоки{% endtrans %}"
+      data-hide="{% trans %}Скрыть блоки{% endtrans %}">
+      {% trans %}Скрыть блоки{% endtrans %}
+    </button>
+  </div>
+
+ 
+  
+
+
+ 
+
+
+  </div>
+
+
+
+
+<div class="search-form">
+  <form id="search-form" action="/search" method="get"
+    style="display:flex; align-items:center; gap:8px; margin-top:15px;">
+    <input type="text" id="keyword" name="keyword" placeholder="{% trans %}Введите номер или название...{% endtrans %}"
+      style="padding:8px; font-size:16px; width:250px;">
+    <button type="submit" style="padding:8px 16px; font-size:16px; cursor:pointer">🔍</button>
+  </form>
+
+  
+</div>
+
+<!-- место для вывода результатов -->
+<div id="search-results"></div>
+
+
+
+
+  <div class="container">
+    <h1>
+      {% trans %}Поиск линий электроснабжения магазинов{% endtrans %}
+    </h1>
+
+
+
+    <select id="block" onchange="loadRows()">
+      <option value="">{% trans %}Выберите блок{% endtrans %}</option>
+      {% for block in blocks %}
+      <option value="{{ block }}">{{ block }}</option>
+      {% endfor %}
+    </select>
+    <select id="row" data-select-row="{% trans %}Выберите ряд{% endtrans %}" onchange="loadStores()" disabled>
+      <option value="">{% trans %}Выберите ряд{% endtrans %}</option>
+    </select>
+    <select id="store" data-select-store="{% trans %}Выберите магазин{% endtrans %}" onchange="getPath()" disabled>
+      <option value="">{% trans %}Выберите магазин{% endtrans %}</option>
+    </select>
+    <div id="pathResult" data-error-rows="{% trans %}Ряды не найдены{% endtrans %}"
+      data-error-stores="{% trans %}Магазины не найдены{% endtrans %}"
+      data-error-path="{% trans %}Путь не найден{% endtrans %}"></div>
+
+  </div>
+
+  <div class="case">
+    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">{% trans %}Блоки 1,2,3{% endtrans %}</a>
+  </div>
+
+
+
+  <script src="/static/script.js"></script>
+  
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+from flask import Flask, render_template, request, jsonify
+import sqlite3
+
+app = Flask(__name__)
+
+# --- Главная страница ---
+@app.route('/')
+def index():
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT block FROM shops")
+    blocks = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return render_template("index.html", blocks=sorted(blocks))
+
+# --- Получение рядов или магазинов ---
+@app.route('/get_rows/<block>')
+def get_rows(block):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=?", (block,))
+        shops = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({"type": "shops", "items": sorted(shops, key=lambda x: str(x))})
+
+    cursor.execute("SELECT DISTINCT row FROM shops WHERE block=?", (block,))
+    rows = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify({"type": "rows", "items": sorted(rows) if rows else []})
+
+# --- Получение магазинов ---
+@app.route('/get_stores/<block>/<row>')
+def get_stores(block, row):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=?", (block,))
+        shops = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({"items": sorted(shops, key=lambda x: str(x))})
+
+    cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=? AND row=?", (block, row))
+    shops = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify({"items": sorted(shops)})
+
+# --- Получение пути ---
+@app.route('/get_path/<block>/<row>/<shop>')
+def get_path(block, row, shop):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT path FROM shops WHERE block=? AND shop_number=?", (block, shop))
+    else:
+        cursor.execute("SELECT path FROM shops WHERE block=? AND row=? AND shop_number=?", (block, row, shop))
+
+    result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        return jsonify({"path": result[0]})
+    return jsonify({"error": "Путь не найден"})
+
+# --- Поиск ---
+@app.route('/search')
+def search():
+    keyword = request.args.get('keyword', '').strip()
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT block, row, shop_number, path FROM shops WHERE shop_number LIKE ?", (f"%{keyword}%",))
+    results = cursor.fetchall()
+    conn.close()
+
+    if results:
+        return jsonify({"results": [{"block": r[0], "row": r[1], "shop": r[2], "path": r[3]} for r in results]})
+    else:
+        return jsonify({"error": "Ничего не найдено"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
+
+
+from flask import Flask, render_template, request, jsonify
+from flask_babel import Babel, gettext as _
+import sqlite3
+
+app = Flask(__name__)
+
+# Настройки локализации
+app.config['BABEL_DEFAULT_LOCALE'] = 'ru'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+
+babel = Babel(app)
+
+# Выбор языка из параметра URL (?lang=uz_Latn)
+@babel.localeselector
+def select_locale():
+    return request.args.get('lang') or 'ru'
+
+# Пробрасываем язык в шаблоны
+@app.context_processor
+def inject_locale():
+    return dict(locale=select_locale())
+
+
+# --- Главная страница ---
+@app.route('/')
+def index():
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT block FROM shops")
+    blocks = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return render_template("index.html", blocks=sorted(blocks))
+
+
+# --- Получение рядов или магазинов ---
+@app.route('/get_rows/<block>')
+def get_rows(block):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=?", (block,))
+        shops = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({"type": "shops", "items": sorted(shops, key=lambda x: str(x))})
+
+    cursor.execute("SELECT DISTINCT row FROM shops WHERE block=?", (block,))
+    rows = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify({"type": "rows", "items": sorted(rows) if rows else []})
+
+
+# --- Получение магазинов ---
+@app.route('/get_stores/<block>/<row>')
+def get_stores(block, row):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=?", (block,))
+        shops = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({"items": sorted(shops, key=lambda x: str(x))})
+
+    cursor.execute("SELECT DISTINCT shop_number FROM shops WHERE block=? AND row=?", (block, row))
+    shops = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify({"items": sorted(shops)})
+
+
+# --- Получение пути ---
+@app.route('/get_path/<block>/<row>/<shop>')
+def get_path(block, row, shop):
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+
+    if block == "Гипермаркет":
+        cursor.execute("SELECT path FROM shops WHERE block=? AND shop_number=?", (block, shop))
+    else:
+        cursor.execute("SELECT path FROM shops WHERE block=? AND row=? AND shop_number=?", (block, row, shop))
+
+    result = cursor.fetchone()
+    conn.close()
+
+    if result:
+        return jsonify({"path": result[0]})
+    return jsonify({"error": _("Путь не найден")})
+
+
+# --- Поиск ---
+@app.route('/search')
+def search():
+    keyword = request.args.get('keyword', '').strip()
+    conn = sqlite3.connect("shops.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT block, row, shop_number, path FROM shops WHERE shop_number LIKE ?", (f"%{keyword}%",))
+    results = cursor.fetchall()
+    conn.close()
+
+    if results:
+        return jsonify({"results": [{"block": r[0], "row": r[1], "shop": r[2], "path": r[3]} for r in results]})
+    else:
+        return jsonify({"error": _("Ничего не найдено")})
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{ _("Store Path Finder") }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+  <div class="header">
+    <div class="language-selector">
+      <label for="languageSelect">{{ _(" ") }} </label>
+      <select id="languageSelect" onchange="changeLanguage(this.value)">
+        <option value="ru" {% if locale=='ru' %}selected{% endif %}>RU</option>
+        <option value="uz_Latn" {% if locale=='uz_Latn' %}selected{% endif %}>UZ (Lotin)</option>
+        <option value="uz_Cyrl" {% if locale=='uz_Cyrl' %}selected{% endif %}>УЗ (Кирилл)</option>
+
+      </select>
+    </div>
+
+    <div class="toggle-btn">
+      <button type="button" onclick="toggleBlocks()">{{ _('Скрыть блоки') }}</button>
+      
+      <div id="blocks-container" style="display:block;">
+        <!-- здесь твои формы выбора блоков/рядов -->
+      </div>
+    </div>
+  </div>
+
+  <div class="search-form">
+    <form action="/search" method="get">
+      <input type="text" id="keyword" name="keyword" placeholder="{{ _('Введите номер или название...') }}">
+      <button type="submit">🔍</button>
+    </form>
+  </div>
+
+  <div id="search-results"></div>
+
+  <div class="container">
+    <h1>{{ _("Поиск линий электроснабжения магазинов") }}</h1>
+
+    <select id="block" onchange="loadRows()">
+      <option value="">{{ _("Выберите блок") }}</option>
+      {% for block in blocks %}
+      <option value="{{ block }}">{{ block }}</option>
+      {% endfor %}
+    </select>
+
+    <select id="row" onchange="loadStores()" disabled>
+      <option value="">{{ _("Выберите ряд") }}</option>
+    </select>
+
+    <select id="store" onchange="getPath()" disabled>
+      <option value="">{{ _("Выберите магазин") }}</option>
+    </select>
+
+    <div id="pathResult" data-error-rows="{{ _('Ряды не найдены') }}" data-error-stores="{{ _('Магазины не найдены') }}"
+      data-error-path="{{ _('Путь не найден') }}">
+    </div>
+  </div>
+
+  <div class="case">
+    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">
+      {{ _("Блоки 1,2,3") }}
+    </a>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+
+</html>
+
+
+блоки , ряд и магазины выподают и выдает результат , но мне бы хотелось бы

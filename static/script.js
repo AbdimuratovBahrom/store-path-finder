@@ -1,198 +1,137 @@
+// выбор языка
+document
+  .getElementById("languageSelect")
+  .addEventListener("change", function () {
+    const lang = this.value;
+    window.location.href = "/set_language/" + lang;
+  });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const btn = document.getElementById("toggle-blocks");
-  const container = document.querySelector(".container");
-  const caseBlock = document.querySelector(".case");
+// скрыть / показать блоки
 
-  if (!btn) {
-    console.warn("Toggle button not found (#toggle-blocks).");
-    return;
+  function toggleBlocks() {
+    const container = document.getElementById("blocks-container");
+    const btn = document.getElementById("toggle-btn");
+
+    const hideText = btn.getAttribute("data-hide");
+    const showText = btn.getAttribute("data-show");
+
+    if (container.style.display === "none") {
+      container.style.display = "block";
+      btn.textContent = hideText;
+    } else {
+      container.style.display = "none";
+      btn.textContent = showText;
+    }
   }
 
-  // Берём переводы из data-атрибутов (вставленные сервером через {% trans %})
-  const hideText =
-    btn.dataset.hide || btn.getAttribute("data-hide") || "Скрыть блоки";
-  const showText =
-    btn.dataset.show || btn.getAttribute("data-show") || "Показать блоки";
 
-  // Установим начальный текст (чтобы язык всегда был корректным)
-  btn.textContent = hideText;
+  document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById("toggle-btn");
+    const container = document.getElementById("blocks-container");
+    if (!btn || !container) return;
 
-  btn.addEventListener("click", function () {
-    if (container) container.classList.toggle("hidden-block");
-    if (caseBlock) caseBlock.classList.toggle("hidden-block");
+    // прочитаем переводы, подставленные Jinja в data-атрибуты
+    const hideText = btn.dataset.hide || "Скрыть блоки";
+    const showText = btn.dataset.show || "Показать блоки";
 
-    const isHidden =
-      container &&
-      container.classList.contains("hidden-block") &&
-      caseBlock &&
-      caseBlock.classList.contains("hidden-block");
+    // функция проверки видимости: смотрим класс или computed style
+    function isHidden() {
+      return (
+        container.classList.contains("hidden") ||
+        window.getComputedStyle(container).display === "none"
+      );
+    }
 
-    btn.textContent = isHidden ? showText : hideText;
-  });
-});
+    // установим начальный текст кнопки по текущему состоянию контейнера
+    btn.textContent = isHidden() ? showText : hideText;
+    btn.setAttribute("aria-expanded", String(!isHidden()));
 
-
-
-function changeLanguage(lang) {
-  fetch(`/set_language/${lang}`).then(() => {
-    window.location.reload();
-  });
-}
-
-function updateFlag(lang) {
-  const select = document.getElementById("languageSelect");
-  let flag = "/static/images/ru.webp";
-  if (lang === "uz_Latn") flag = "/static/images/uz_latn.webp";
-  if (lang === "uz_Cyrl") flag = "/static/images/uz_cyrl.webp";
-  select.style.backgroundImage = `url('${flag}')`;
-  select.style.backgroundRepeat = "no-repeat";
-  select.style.backgroundPosition = "8px center";
-  select.style.backgroundSize = "24px 16px";
-  select.style.paddingLeft = "40px";
-}
-
-// Вызывайте при загрузке и при смене языка:
-document.addEventListener("DOMContentLoaded", function () {
-  updateFlag(document.getElementById("languageSelect").value);
-  document
-    .getElementById("languageSelect")
-    .addEventListener("change", function () {
-      updateFlag(this.value);
+    // навесим слушатель клика (лучше, чем inline onclick)
+    btn.addEventListener("click", function () {
+      const nowHidden = container.classList.toggle("hidden");
+      btn.textContent = nowHidden ? showText : hideText;
+      btn.setAttribute("aria-expanded", String(!nowHidden));
     });
-});
+  });
 
+
+
+
+// загрузка рядов или магазинов
 function loadRows() {
-  const blockSelect = document.getElementById("block");
+  const block = document.getElementById("block").value;
   const rowSelect = document.getElementById("row");
   const storeSelect = document.getElementById("store");
-  const pathResult = document.getElementById("pathResult");
 
-  rowSelect.innerHTML = `<option value="">${rowSelect.dataset.selectRow}</option>`;
+  rowSelect.innerHTML = "<option value=''>Выберите ряд</option>";
+  storeSelect.innerHTML = "<option value=''>Выберите магазин</option>";
   rowSelect.disabled = true;
-  storeSelect.innerHTML = `<option value="">${storeSelect.dataset.selectStore}</option>`;
   storeSelect.disabled = true;
-  pathResult.innerHTML = "";
 
-  const block = blockSelect.value;
-  if (block) {
-    fetch(`/get_rows/${encodeURIComponent(block)}`)
-      .then((response) => response.json())
-      .then((rows) => {
-        if (rows.length > 0) {
-          rowSelect.disabled = false;
-          rows.forEach((row) => {
-            rowSelect.innerHTML += `<option value="${row}">${row}</option>`;
-          });
-        } else {
-          pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorRows}</div>`;
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching rows:", error);
-        pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorRows}</div>`;
-      });
-  }
+  if (!block) return;
+
+  fetch(`/get_rows/${block}`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.type === "shops") {
+        data.items.forEach((shop) => {
+          let opt = document.createElement("option");
+          opt.value = shop;
+          opt.textContent = shop;
+          storeSelect.appendChild(opt);
+        });
+        storeSelect.disabled = false;
+      } else {
+        data.items.forEach((row) => {
+          let opt = document.createElement("option");
+          opt.value = row;
+          opt.textContent = row;
+          rowSelect.appendChild(opt);
+        });
+        rowSelect.disabled = false;
+      }
+    });
 }
 
+// загрузка магазинов
 function loadStores() {
-  const blockSelect = document.getElementById("block");
-  const rowSelect = document.getElementById("row");
+  const block = document.getElementById("block").value;
+  const row = document.getElementById("row").value;
   const storeSelect = document.getElementById("store");
-  const pathResult = document.getElementById("pathResult");
 
-  storeSelect.innerHTML = `<option value="">${storeSelect.dataset.selectStore}</option>`;
+  storeSelect.innerHTML = "<option value=''>Выберите магазин</option>";
   storeSelect.disabled = true;
-  pathResult.innerHTML = "";
 
-  const block = blockSelect.value;
-  const row = rowSelect.value;
-  if (block && row) {
-    fetch(`/get_stores/${encodeURIComponent(block)}/${encodeURIComponent(row)}`)
-      .then((response) => response.json())
-      .then((stores) => {
-        if (stores.length > 0) {
-          storeSelect.disabled = false;
-          stores.forEach((store) => {
-            storeSelect.innerHTML += `<option value="${store}">${store}</option>`;
-          });
-        } else {
-          pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorStores}</div>`;
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching stores:", error);
-        pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorStores}</div>`;
+  if (!row) return;
+
+  fetch(`/get_stores/${block}/${row}`)
+    .then((res) => res.json())
+    .then((data) => {
+      data.items.forEach((shop) => {
+        let opt = document.createElement("option");
+        opt.value = shop;
+        opt.textContent = shop;
+        storeSelect.appendChild(opt);
       });
-  }
+      storeSelect.disabled = false;
+    });
 }
 
+// загрузка пути
 function getPath() {
-  const blockSelect = document.getElementById("block");
-  const rowSelect = document.getElementById("row");
-  const storeSelect = document.getElementById("store");
-  const pathResult = document.getElementById("pathResult");
-  const block = blockSelect.value;
-  const row = rowSelect.value;
-  const shopId = storeSelect.value;
+  const block = document.getElementById("block").value;
+  const row = document.getElementById("row").value || "None";
+  const shop = document.getElementById("store").value;
 
-  if (block && row && shopId) {
-    fetch(
-      `/get_path/${encodeURIComponent(block)}/${encodeURIComponent(
-        row
-      )}/${encodeURIComponent(shopId)}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.path) {
-          pathResult.innerHTML = data.path;
-        } else {
-          pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorPath}</div>`;
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching path:", error);
-        pathResult.innerHTML = `<div class="error">${pathResult.dataset.errorPath}</div>`;
-      });
-  }
+  if (!shop) return;
+
+  fetch(`/get_path/${block}/${row}/${shop}`)
+    .then((res) => res.json())
+    .then((data) => {
+      const pathResult = document.getElementById("pathResult");
+      pathResult.innerHTML = data.path ? `<b>${data.path}</b>` : data.error;
+    });
 }
-// ...existing code...
-
-// Смена изображений
-let imageIndex = 1;
-const images = [
-  "/static/images/abu-saxiy1.webp",
-  "/static/images/abu-saxiy2.webp",
-  "/static/images/abu-saxiy3.webp",
-  "/static/images/abu-saxiy4.webp",
-  "/static/images/abu-saxiy5.webp",
-  "/static/images/abu-saxiy6.webp",
-  "/static/images/abu-saxiy7.webp",
-  "/static/images/abu-saxiy8.webp",
-  "/static/images/abu-saxiy9.webp",
-  "/static/images/abu-saxiy10.webp",
-  "/static/images/abu-saxiy11.webp",
-  "/static/images/abu-saxiy12.webp",
-  "/static/images/abu-saxiy13.webp",
-  "/static/images/abu-saxiy14.webp",
-  "/static/images/abu-saxiy15.webp",
-  "/static/images/abu-saxiy16.webp",
-  "/static/images/abu-saxiy17.webp",
-  "/static/images/abu-saxiy18.webp",
-  "/static/images/abu-saxiy19.webp",
-  "/static/images/abu-saxiy20.webp",
-  "/static/images/abu-saxiy21.webp",
-  "/static/images/abu-saxiy22.webp",
-  "/static/images/abu-saxiy23.webp",
-  "/static/images/abu-saxi24.webp",
-  "/static/images/abu-saxiy25.webp",
-  "/static/images/abu-saxiy26.jpg",
-  "/static/images/abu-saxiy27.jpg",
-  "/static/images/abu-saxiy28.jpg",
-];
-setInterval(() => {
-  document.body.style.backgroundImage = `url(${images[imageIndex]})`;
-  imageIndex = (imageIndex + 1) % images.length;
-}, 15000);
 
 
+  
