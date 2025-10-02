@@ -25,36 +25,57 @@ document
   }
 
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById("toggle-btn");
-    const container = document.getElementById("blocks-container");
-    if (!btn || !container) return;
+  // document.addEventListener("DOMContentLoaded", function () {
+  //   const btn = document.getElementById("toggle-btn");
+  //   const container = document.getElementById("blocks-container");
+  //   if (!btn || !container) return;
 
-    // прочитаем переводы, подставленные Jinja в data-атрибуты
-    const hideText = btn.dataset.hide || "Скрыть блоки";
-    const showText = btn.dataset.show || "Показать блоки";
+  //   // прочитаем переводы, подставленные Jinja в data-атрибуты
+  //   const hideText = btn.dataset.hide || "Скрыть блоки";
+  //   const showText = btn.dataset.show || "Показать блоки";
 
-    // функция проверки видимости: смотрим класс или computed style
-    function isHidden() {
-      return (
-        container.classList.contains("hidden") ||
-        window.getComputedStyle(container).display === "none"
-      );
+  //   // функция проверки видимости: смотрим класс или computed style
+  //   function isHidden() {
+  //     return (
+  //       container.classList.contains("hidden") ||
+  //       window.getComputedStyle(container).display === "none"
+  //     );
+  //   }
+
+  //   // установим начальный текст кнопки по текущему состоянию контейнера
+  //   btn.textContent = isHidden() ? showText : hideText;
+  //   btn.setAttribute("aria-expanded", String(!isHidden()));
+
+  //   // навесим слушатель клика (лучше, чем inline onclick)
+  //   btn.addEventListener("click", function () {
+  //     const nowHidden = container.classList.toggle("hidden");
+  //     btn.textContent = nowHidden ? showText : hideText;
+  //     btn.setAttribute("aria-expanded", String(!nowHidden));
+  //   });
+  // });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("toggle-btn");
+  const container = document.getElementById("blocks-container");
+
+  if (!btn || !container) {
+    console.error("❌ toggle-btn или blocks-container не найдены");
+    return;
+  }
+
+  const hideText = btn.dataset.hide || "Скрыть блоки";
+  const showText = btn.dataset.show || "Показать блоки";
+
+  btn.addEventListener("click", function () {
+    if (container.style.display === "none") {
+      container.style.display = "block";
+      btn.textContent = hideText;
+    } else {
+      container.style.display = "none";
+      btn.textContent = showText;
     }
-
-    // установим начальный текст кнопки по текущему состоянию контейнера
-    btn.textContent = isHidden() ? showText : hideText;
-    btn.setAttribute("aria-expanded", String(!isHidden()));
-
-    // навесим слушатель клика (лучше, чем inline onclick)
-    btn.addEventListener("click", function () {
-      const nowHidden = container.classList.toggle("hidden");
-      btn.textContent = nowHidden ? showText : hideText;
-      btn.setAttribute("aria-expanded", String(!nowHidden));
-    });
   });
-
-
+});
 
 
 // загрузка рядов или магазинов
