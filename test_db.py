@@ -1,51 +1,69 @@
 import sqlite3
+import os
 
 DB_FILE = "shops.db"
 
-def test_all_data():
+def connect_db():
+    if not os.path.exists(DB_FILE):
+        print(f"❌ База {DB_FILE} не найдена. Сначала запусти init_db.py")
+        exit(1)
     conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def print_blocks():
+    conn = connect_db()
     cursor = conn.cursor()
 
-    # Проверим, есть ли таблица
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='shops'")
-    if not cursor.fetchone():
-        print("❌ Таблица 'shops' не найдена.")
-        conn.close()
-        return
+    print("\n=== 📦 Список блоков ===")
+    blocks = cursor.execute("SELECT DISTINCT block FROM shops ORDER BY block").fetchall()
+    for b in blocks:
+        print(f"🔹 {b['block']}")
 
-    # Количество строк
-    cursor.execute("SELECT COUNT(*) FROM shops")
-    total = cursor.fetchone()[0]
-    print(f"✅ Всего записей в shops: {total}")
-
-    # Выведем первые 20 строк для проверки
-    print("\n📋 Первые 20 записей:")
-    cursor.execute("SELECT block, row, shop_number, path FROM shops LIMIT 20")
-    for row in cursor.fetchall():
-        print(row)
+    print("\n=== 📂 Ряды по блокам ===")
+    for b in blocks:
+        rows = cursor.execute("SELECT DISTINCT row FROM shops WHERE block = ? ORDER BY row", (b["block"],)).fetchall()
+        print(f"\n🔹 Блок: {b['block']}")
+        for r in rows:
+            print(f"   ➡️ Ряд: {r['row']}")
 
     conn.close()
 
-def test_query(shop_number):
-    conn = sqlite3.connect(DB_FILE)
+def test_query(keyword):
+    conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT block, row, shop_number, path FROM shops WHERE shop_number = ?",
-        (shop_number,)
-    )
-    results = cursor.fetchall()
+
+    print(f"\n============================================================")
+    print(f"🔎 Testing query for '{keyword}'")
+
+    results = cursor.execute("""
+        SELECT * FROM shops
+        WHERE shop LIKE ? OR block LIKE ? OR row LIKE ? OR path LIKE ?
+    """, (f"%{keyword}%", f"%{keyword}%", f"%{keyword}%", f"%{keyword}%")).fetchall()
+
+    if not results:
+        print("❌ Ничего не найдено")
+    else:
+        for r in results:
+            print(f"Block: {r['block']} | Row: {r['row']} | Shop: {r['shop']} | Path: {r['path']}")
+
     conn.close()
-    return results
 
 if __name__ == "__main__":
-    test_all_data()
+    # Проверка структуры
+    conn = connect_db()
+    cursor = conn.cursor()
 
-    test_shops = ["22", "79", "1A", "140a", "38-автостансия"]
-    for shop in test_shops:
-        print(f"\n🔎 Testing query for {shop}:")
-        results = test_query(shop)
-        if results:
-            for r in results:
-                print(f"  Block: {r[0]} | Row: {r[1]} | Shop: {r[2]} | Path: {r[3]}")
-        else:
-            print("  ❌ Ничего не найдено")
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='shops'")
+    table = cursor.fetchone()
+    if not table:
+        print("❌ Таблица 'shops' не найдена. Сначала запусти init_db.py")
+        exit(1)
+
+    # Вывод блоков и рядов
+    print_blocks()
+
+    # Тестовые запросы
+    test_query("Офис")
+    test_query("освещение")
+    test_query("туалет")

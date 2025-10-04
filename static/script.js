@@ -1,158 +1,172 @@
-// выбор языка
-document
-  .getElementById("languageSelect")
-  .addEventListener("change", function () {
-    const lang = this.value;
-    window.location.href = "/set_language/" + lang;
-  });
-
-// скрыть / показать блоки
-
-  function toggleBlocks() {
-    const container = document.getElementById("blocks-container");
-    const btn = document.getElementById("toggle-btn");
-
-    const hideText = btn.getAttribute("data-hide");
-    const showText = btn.getAttribute("data-show");
-
-    if (container.style.display === "none") {
-      container.style.display = "block";
-      btn.textContent = hideText;
-    } else {
-      container.style.display = "none";
-      btn.textContent = showText;
-    }
+// переключение языка
+document.addEventListener("DOMContentLoaded", () => {
+  const langSelect = document.getElementById("languageSelect");
+  if (langSelect) {
+    langSelect.addEventListener("change", () => {
+      const lang = langSelect.value;
+      window.location.href = "/set_language/" + lang;
+    });
   }
 
-
-  // document.addEventListener("DOMContentLoaded", function () {
-  //   const btn = document.getElementById("toggle-btn");
-  //   const container = document.getElementById("blocks-container");
-  //   if (!btn || !container) return;
-
-  //   // прочитаем переводы, подставленные Jinja в data-атрибуты
-  //   const hideText = btn.dataset.hide || "Скрыть блоки";
-  //   const showText = btn.dataset.show || "Показать блоки";
-
-  //   // функция проверки видимости: смотрим класс или computed style
-  //   function isHidden() {
-  //     return (
-  //       container.classList.contains("hidden") ||
-  //       window.getComputedStyle(container).display === "none"
-  //     );
-  //   }
-
-  //   // установим начальный текст кнопки по текущему состоянию контейнера
-  //   btn.textContent = isHidden() ? showText : hideText;
-  //   btn.setAttribute("aria-expanded", String(!isHidden()));
-
-  //   // навесим слушатель клика (лучше, чем inline onclick)
-  //   btn.addEventListener("click", function () {
-  //     const nowHidden = container.classList.toggle("hidden");
-  //     btn.textContent = nowHidden ? showText : hideText;
-  //     btn.setAttribute("aria-expanded", String(!nowHidden));
-  //   });
-  // });
-
-document.addEventListener("DOMContentLoaded", function () {
+  // toggle hide/show
   const btn = document.getElementById("toggle-btn");
   const container = document.getElementById("blocks-container");
+  if (btn && container) {
+    const hideText = btn.dataset.hide || "Скрыть блоки";
+    const showText = btn.dataset.show || "Показать блоки";
+    // начально: если контейнер видим, ставим hideText
+    btn.textContent =
+      window.getComputedStyle(container).display === "none"
+        ? showText
+        : hideText;
 
-  if (!btn || !container) {
-    console.error("❌ toggle-btn или blocks-container не найдены");
-    return;
+    btn.addEventListener("click", () => {
+      if (
+        container.style.display === "none" ||
+        window.getComputedStyle(container).display === "none"
+      ) {
+        container.style.display = "block";
+        btn.textContent = hideText;
+      } else {
+        container.style.display = "none";
+        btn.textContent = showText;
+      }
+    });
   }
-
-  const hideText = btn.dataset.hide || "Скрыть блоки";
-  const showText = btn.dataset.show || "Показать блоки";
-
-  btn.addEventListener("click", function () {
-    if (container.style.display === "none") {
-      container.style.display = "block";
-      btn.textContent = hideText;
-    } else {
-      container.style.display = "none";
-      btn.textContent = showText;
-    }
-  });
 });
 
-
-// загрузка рядов или магазинов
+// загрузка рядов / магазинов
 function loadRows() {
   const block = document.getElementById("block").value;
   const rowSelect = document.getElementById("row");
   const storeSelect = document.getElementById("store");
 
-  rowSelect.innerHTML = "<option value=''>Выберите ряд</option>";
-  storeSelect.innerHTML = "<option value=''>Выберите магазин</option>";
+  rowSelect.innerHTML = `<option value="">${
+    gettext ? gettext("Выберите ряд") : "Выберите ряд"
+  }</option>`;
+  storeSelect.innerHTML = `<option value="">${
+    gettext ? gettext("Выберите магазин") : "Выберите магазин"
+  }</option>`;
   rowSelect.disabled = true;
   storeSelect.disabled = true;
 
   if (!block) return;
 
-  fetch(`/get_rows/${block}`)
+  fetch(`/get_rows/${encodeURIComponent(block)}`)
     .then((res) => res.json())
     .then((data) => {
       if (data.type === "shops") {
+        // сразу магазины
+        storeSelect.innerHTML = `<option value="">${
+          gettext ? gettext("Выберите магазин") : "Выберите магазин"
+        }</option>`;
         data.items.forEach((shop) => {
-          let opt = document.createElement("option");
+          const opt = document.createElement("option");
           opt.value = shop;
           opt.textContent = shop;
           storeSelect.appendChild(opt);
         });
         storeSelect.disabled = false;
       } else {
-        data.items.forEach((row) => {
-          let opt = document.createElement("option");
-          opt.value = row;
-          opt.textContent = row;
+        // ряды
+        rowSelect.innerHTML = `<option value="">${
+          gettext ? gettext("Выберите ряд") : "Выберите ряд"
+        }</option>`;
+        data.items.forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r;
+          opt.textContent = r;
           rowSelect.appendChild(opt);
         });
         rowSelect.disabled = false;
       }
+    })
+    .catch((err) => {
+      console.error("loadRows error:", err);
     });
 }
 
-// загрузка магазинов
 function loadStores() {
   const block = document.getElementById("block").value;
   const row = document.getElementById("row").value;
   const storeSelect = document.getElementById("store");
 
-  storeSelect.innerHTML = "<option value=''>Выберите магазин</option>";
+  storeSelect.innerHTML = `<option value="">${
+    gettext ? gettext("Выберите магазин") : "Выберите магазин"
+  }</option>`;
   storeSelect.disabled = true;
 
-  if (!row) return;
+  if (!block) return;
 
-  fetch(`/get_stores/${block}/${row}`)
+  fetch(`/get_stores/${encodeURIComponent(block)}/${encodeURIComponent(row)}`)
     .then((res) => res.json())
     .then((data) => {
-      data.items.forEach((shop) => {
-        let opt = document.createElement("option");
-        opt.value = shop;
-        opt.textContent = shop;
+      storeSelect.innerHTML = `<option value="">${
+        gettext ? gettext("Выберите магазин") : "Выберите магазин"
+      }</option>`;
+      (data.items || []).forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
         storeSelect.appendChild(opt);
       });
       storeSelect.disabled = false;
-    });
+    })
+    .catch((err) => console.error("loadStores error:", err));
 }
 
-// загрузка пути
 function getPath() {
   const block = document.getElementById("block").value;
   const row = document.getElementById("row").value || "None";
   const shop = document.getElementById("store").value;
+  if (!block || !shop) return;
 
-  if (!shop) return;
-
-  fetch(`/get_path/${block}/${row}/${shop}`)
+  fetch(
+    `/get_path/${encodeURIComponent(block)}/${encodeURIComponent(
+      row
+    )}/${encodeURIComponent(shop)}`
+  )
     .then((res) => res.json())
     .then((data) => {
-      const pathResult = document.getElementById("pathResult");
-      pathResult.innerHTML = data.path ? `<b>${data.path}</b>` : data.error;
-    });
+      const pr = document.getElementById("pathResult");
+      if (data.path) {
+        pr.innerHTML = `<div class="path-box">${data.path}</div>`;
+      } else if (data.error) {
+        pr.innerHTML = `<div class="error">${data.error}</div>`;
+      } else {
+        pr.innerHTML = "";
+      }
+    })
+    .catch((err) => console.error("getPath error:", err));
 }
 
+// helper для локализации placeholder если gettext не доступен на клиенте
+function gettext(s) {
+  return s;
+}
 
-  
+// AJAX-поиск формы
+function doSearch(e) {
+  e.preventDefault();
+  const kw = document.getElementById("keyword").value.trim();
+  if (!kw) return false;
+  fetch(`/search?keyword=${encodeURIComponent(kw)}`)
+    .then((res) => res.json())
+    .then((data) => {
+      const out = document.getElementById("search-results");
+      if (data.error) {
+        out.innerHTML = `<div class="error">${data.error}</div>`;
+        return;
+      }
+      const arr = data.results || [];
+      if (!arr.length) {
+        out.innerHTML = `<div class="error">${gettext(
+          "Ничего не найдено"
+        )}</div>`;
+        return;
+      }
+      out.innerHTML = "<pre>" + arr.join("\n") + "</pre>";
+    })
+    .catch((err) => console.error("search error:", err));
+  return false;
+}
