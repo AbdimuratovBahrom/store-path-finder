@@ -21,7 +21,7 @@ def select_locale():
 
 # Создаём Babel с locale_selector (совместимо с recent flask-babel).
 # Если у тебя старая версия flask-babel, используй альтернативный способ (в прошлом у тебя уже работало).
-babel = Babel(app, locale_selector=select_locale)
+babel.init_app(app, locale_selector=select_locale)  # Регистрируем селектор здесь
 
 # делаем get_locale и LANGUAGES доступными в шаблонах
 @app.context_processor
