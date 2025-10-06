@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_babel import Babel, gettext as _, get_locale
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+babel = Babel(app)
 
 # === Языки ===
 LANGUAGES = {
@@ -13,9 +13,11 @@ LANGUAGES = {
     "uz_Cyrl": "Ўзбекча (Кирилл)"
 }
 
+@babel.localeselector
 def select_locale():
-    # возвращаем сохранённый язык или ru
-    return session.get("lang", "ru")
+    # Пример: выбираем локаль по Accept-Language заголовку
+    return request.accept_languages.best_match(['en', 'ru', 'uz'])  # адаптируйте под ваши языки
+    
 
 # Создаём Babel с locale_selector (совместимо с recent flask-babel).
 # Если у тебя старая версия flask-babel, используй альтернативный способ (в прошлом у тебя уже работало).
