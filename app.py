@@ -16,12 +16,16 @@ LANGUAGES = {
 @babel.localeselector
 def select_locale():
     # Пример: выбираем локаль по Accept-Language заголовку
-    return request.accept_languages.best_match(['en', 'ru', 'uz'])  # адаптируйте под ваши языки
+    from flask import g, request
+    if hasattr(g, 'user') and g.user:
+        return g.user.locale
+    return request.accept_languages.best_match(['en', 'ru'])  # Резервный вариант
+    
     
 
 # Создаём Babel с locale_selector (совместимо с recent flask-babel).
 # Если у тебя старая версия flask-babel, используй альтернативный способ (в прошлом у тебя уже работало).
-babel.init_app(app, locale_selector=select_locale)  # Регистрируем селектор здесь
+babel.init_app(app)
 
 # делаем get_locale и LANGUAGES доступными в шаблонах
 @app.context_processor
