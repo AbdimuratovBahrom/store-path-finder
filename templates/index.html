@@ -1,12 +1,12 @@
+
+
 <!DOCTYPE html>
 <html lang="{{ get_locale() }}">
-
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>{{ _('Поиск магазина') }}</title>
+  <title>{{ _('Store Path Finder') }}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -17,10 +17,9 @@
       <select id="languageSelect">
         {% for code, name in LANGUAGES.items() %}
         <option value="{{ code }}" {% if get_locale_str==code %}selected{% endif %}>{{ name }}</option>
-
-
         {% endfor %}
       </select>
+
     </div>
 
     <div class="toggle-btn">
@@ -28,12 +27,14 @@
         {{ _('Скрыть блоки') }}
       </button>
     </div>
+    
+    
+
   </div>
 
-  <div id="blocks-container" class="blocks-visible">
+  <div id="blocks-container">
     <div class="container">
-      <h1>{% trans %}Поиск линий электроснабжения магазинов{% endtrans %}</h1>
-
+      <h1>{{ _('Поиск линий электроснабжения магазинов') }}</h1>
       <select id="block" onchange="loadRows()">
         <option value="">{{ _('Выберите блок') }}</option>
         {% for block in blocks %}
@@ -54,9 +55,8 @@
   </div>
 
   <div class="search-form">
-    <form id="search-form" action="/search" method="get" onsubmit="return doSearch(event)">
-      <input type="text" id="keyword" name="keyword"
-        placeholder="{% trans %}Введите номер или название...{% endtrans %}">
+    <form onsubmit="return doSearch(event)">
+      <input type="text" id="keyword" placeholder="{{ _('Введите номер или название...') }}">
       <button type="submit">🔍</button>
     </form>
   </div>
@@ -65,7 +65,7 @@
 
   <div class="case">
     <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">
-      {% trans %}Блоки 1,2,3{% endtrans %}
+      {{ _('Блоки 1,2,3') }}
     </a>
   </div>
 

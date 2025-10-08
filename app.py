@@ -1,9 +1,18 @@
+
+
+
 import sqlite3
 import re
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, make_response
 from flask_babel import Babel, gettext as _, get_locale
 
+
+
 app = Flask(__name__)
+
+
+app.secret_key = "super_secret_key"  # обязательно для session
+
 babel = Babel(app)
 
 # === Языки ===
@@ -12,6 +21,7 @@ LANGUAGES = {
     "uz_Latn": "O‘zbekcha (Lotin)",
     "uz_Cyrl": "Ўзбекча (Кирилл)"
 }
+
 
 @babel.localeselector
 def select_locale():
@@ -110,6 +120,17 @@ def index():
     blocks = sorted(blocks)
     return render_template("index.html", blocks=blocks)
 
+# === Выбор языка ===
+@babel.localeselector
+def select_locale():
+    # приоритет — язык из session
+    lang = session.get("lang")
+    if lang in LANGUAGES:
+        return lang
+    # если нет — смотрим Accept-Language заголовок браузера
+    return request.accept_languages.best_match(LANGUAGES.keys()) or "ru"
+
+
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
@@ -118,121 +139,159 @@ def set_language(lang):
     return redirect(url_for("index"))
 
 
+@app.context_processor
+def inject_helpers():
+    """Добавляем текущий язык и список языков в шаблон."""
+    try:
+        locale_str = str(get_locale())
+    except Exception:
+        locale_str = session.get("lang", "ru")
+    return dict(
+        LANGUAGES=LANGUAGES,
+        get_locale_str=locale_str,
+        get_locale=lambda: locale_str
+    )
+
+# === База данных ===
+def get_db_connection():
+    conn = sqlite3.connect("shops.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# === Служебные функции ===
+def numeric_key_for_shop(name):
+    if not name:
+        return (10**9, "")
+    m = re.search(r"(\d+)", str(name))
+    return (int(m.group(1)), name) if m else (10**9, name.lower())
+
+
+def row_sort_key(r):
+    if not r:
+        return (2, "")
+    s = str(r).strip()
+    if s.isdigit():
+        return (0, int(s))
+    m = re.search(r"(\d+)", s)
+    if m:
+        return (1, int(m.group(1)), s)
+    return (2, s.lower())
+
+
+def is_excluded_for_specific(shop_name):
+    if not shop_name:
+        return True
+    s = re.sub(r"(?i)^маг[-\s]*", "", str(shop_name))
+    if re.fullmatch(r"\d+", s) or re.fullmatch(r"\d+[a-zA-Zа-яёА-ЯЁ]+\d*", s) or s == "005":
+        return True
+    return False
+
+
+# === ROUTES ===
+@app.route("/")
+def index():
+    conn = get_db_connection()
+    blocks = [r["block"] for r in conn.execute("SELECT DISTINCT block FROM shops").fetchall()]
+    conn.close()
+    if "Специфические объекты" not in blocks:
+        blocks.append("Специфические объекты")
+    return render_template("index.html", blocks=sorted(blocks))
+
+
 @app.route("/get_rows/<block>")
 def get_rows(block):
     conn = get_db_connection()
-
-    # Гипермаркет — сразу список магазинов (нет рядов)
     if block == "Гипермаркет":
-        stores = conn.execute("SELECT DISTINCT shop FROM shops WHERE block = ?", (block,)).fetchall()
+        # В гипермаркете нет рядов, сразу возвращаем магазины
+        shops = conn.execute("SELECT DISTINCT shop FROM shops WHERE block=?", (block,)).fetchall()
         conn.close()
-        items = sorted({s["shop"] for s in stores}, key=numeric_key_for_shop)
-        return jsonify({"type": "shops", "items": items})
+        return jsonify({
+            "type": "shops",
+            "items": sorted({s["shop"] for s in shops}, key=numeric_key_for_shop)
+        })
 
-    # Специфические объекты — вернуть НЕ ряды, а магазины-спецы
     if block == "Специфические объекты":
-        # Берём записи, отмеченные как спец (row='Спец') или записанные в спец-блок
-        stores = conn.execute(
-            "SELECT DISTINCT shop FROM shops WHERE block = 'Специфические объекты' OR row = 'Спец' OR block IN ('1-блок','2-блок','3-блок')"
-        ).fetchall()
+        shops = conn.execute("SELECT DISTINCT shop FROM shops WHERE block=?", (block,)).fetchall()
         conn.close()
-        # фильтруем нежелательные магазины и сортируем по строке
-        items = sorted({s["shop"] for s in stores if s["shop"] and not is_excluded_for_specific(s["shop"])}, key=lambda x: (x.lower()))
+        items = sorted({s["shop"] for s in shops if not is_excluded_for_specific(s["shop"])}, key=str.lower)
         return jsonify({"type": "shops", "items": items})
 
-    # Обычный блок — возвращаем набор рядов (без None)
-    rows = conn.execute(
-        "SELECT DISTINCT row FROM shops WHERE block = ? AND row IS NOT NULL", (block,)
-    ).fetchall()
+    rows = conn.execute("SELECT DISTINCT row FROM shops WHERE block=?", (block,)).fetchall()
     conn.close()
-    items = sorted({r["row"] for r in rows if r["row"] is not None}, key=row_sort_key)
-    return jsonify({"type": "rows", "items": items})
+    return jsonify({
+        "type": "rows",
+        "items": sorted({r["row"] for r in rows if r["row"]}, key=row_sort_key)
+    })
 
 
 @app.route("/get_stores/<block>/<row>")
 def get_stores(block, row):
     conn = get_db_connection()
-
-    # Специфические объекты — вернуть заранее отфильтрованные магазины
-    if block == "Специфические объекты":
-        stores = conn.execute(
-            "SELECT DISTINCT shop FROM shops WHERE block = 'Специфические объекты' OR row = 'Спец' OR block IN ('1-блок','2-блок','3-блок')"
-        ).fetchall()
-        conn.close()
-        items = sorted({s["shop"] for s in stores if s["shop"] and not is_excluded_for_specific(s["shop"])}, key=lambda x: (x.lower()))
-        return jsonify({"items": items})
-
-    # Гипермаркет — вернуть магазины
     if block == "Гипермаркет":
-        stores = conn.execute("SELECT DISTINCT shop FROM shops WHERE block = ?", (block,)).fetchall()
+        shops = conn.execute("SELECT DISTINCT shop FROM shops WHERE block=?", (block,)).fetchall()
         conn.close()
-        items = sorted({s["shop"] for s in stores}, key=numeric_key_for_shop)
+        return jsonify({"items": sorted({s["shop"] for s in shops}, key=numeric_key_for_shop)})
+
+    if block == "Специфические объекты":
+        shops = conn.execute("SELECT DISTINCT shop FROM shops WHERE block=?", (block,)).fetchall()
+        conn.close()
+        items = sorted({s["shop"] for s in shops if not is_excluded_for_specific(s["shop"])}, key=str.lower)
         return jsonify({"items": items})
 
-    # Обычный блок + ряд
-    if row in ("None", "", "None "):
-        stores = conn.execute("SELECT DISTINCT shop FROM shops WHERE block = ? AND row IS NULL", (block,)).fetchall()
-    else:
-        stores = conn.execute("SELECT DISTINCT shop FROM shops WHERE block = ? AND row = ?", (block, row)).fetchall()
+    shops = conn.execute("SELECT DISTINCT shop FROM shops WHERE block=? AND row=?", (block, row)).fetchall()
     conn.close()
-    items = sorted({s["shop"] for s in stores if s["shop"] is not None}, key=numeric_key_for_shop)
-    return jsonify({"items": items})
+    return jsonify({"items": sorted({s["shop"] for s in shops}, key=numeric_key_for_shop)})
 
 
 @app.route("/get_path/<block>/<row>/<shop>")
 def get_path(block, row, shop):
     conn = get_db_connection()
-    add_mag = not (block in ["Гипермаркет", "Специфические объекты"])
-
     if block == "Специфические объекты":
-        results = conn.execute("SELECT DISTINCT path FROM shops WHERE shop = ?", (shop,)).fetchall()
-    elif row in ("None", "", "None "):
-        results = conn.execute("SELECT DISTINCT path FROM shops WHERE block = ? AND row IS NULL AND shop = ?", (block, shop)).fetchall()
+        res = conn.execute("SELECT DISTINCT path FROM shops WHERE shop=?", (shop,)).fetchall()
+    elif block == "Гипермаркет":
+        res = conn.execute("SELECT DISTINCT path FROM shops WHERE block=? AND shop=?", (block, shop)).fetchall()
     else:
-        results = conn.execute("SELECT DISTINCT path FROM shops WHERE block = ? AND row = ? AND shop = ?", (block, row, shop)).fetchall()
-
+        res = conn.execute("SELECT DISTINCT path FROM shops WHERE block=? AND row=? AND shop=?", (block, row, shop)).fetchall()
     conn.close()
-    if not results:
+
+    if not res:
         return jsonify({"error": _("Путь не найден")})
 
+    # Добавляем финальную точку (последнее слово пути или shop)
     paths = []
-    for r in results:
-        p = r["path"]
-        # если нужно добавить Маг-N (shop — только цифры) и в path ещё нет Маг-
-        shop_str = shop.strip()
-        if add_mag and re.fullmatch(r"\d+", shop_str) and "Маг-" not in p and not re.search(r"\bМаг\b", p):
-            p = f"{p} > Маг-{shop_str}"
-        # для блока 38-склад: убираем слово "Ряд" в отображении (требование)
-        p = re.sub(r"\bРяд\s+([^\>]+)\b", r"\1", p)
+    for r in res:
+        p = r["path"].strip()
+        if not p.endswith(shop):
+            p += f" > {shop}"
         paths.append(p)
-    # убираем дубликаты, сохраняем порядок
-    seen = set()
-    final = []
-    for x in paths:
-        if x not in seen:
-            final.append(x)
-            seen.add(x)
-    return jsonify({"path": " | ".join(final)})
+
+    return jsonify({"path": " | ".join(paths)})
 
 
 @app.route("/search")
 def search():
     keyword = request.args.get("keyword", "").strip()
+    if not keyword:
+        return jsonify({"error": _("Введите запрос")})
     conn = get_db_connection()
     results = conn.execute(
-        "SELECT * FROM shops WHERE shop LIKE ? OR block LIKE ? OR row LIKE ? OR path LIKE ?",
+        "SELECT * FROM shops WHERE shop LIKE ? OR path LIKE ? OR block LIKE ? OR row LIKE ?",
         (f"%{keyword}%", f"%{keyword}%", f"%{keyword}%", f"%{keyword}%")
     ).fetchall()
     conn.close()
-    formatted = [
-        f"Block: {r['block']} | Row: {r['row']} | Shop: {r['shop']} | Path: {r['path']}"
-        for r in results
-    ]
-    # убрать дубли и вернуть
-    formatted = list(dict.fromkeys(formatted))
-    if not formatted:
+
+    if not results:
         return jsonify({"error": _("Ничего не найдено")})
-    return jsonify({"results": formatted})
+
+    formatted = []
+    for r in results:
+        path = r["path"]
+        if not path.endswith(str(r["shop"])):
+            path += f" > {r['shop']}"
+        formatted.append(f"{path}")
+
+    return jsonify({"results": list(dict.fromkeys(formatted))})
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ msgstr ""
 
 #: templates/index.html:7
 msgid "Store Path Finder"
-msgstr ""
+msgstr "Поиск магазина"
 
 #: templates/index.html:19
 msgid "Язык"
