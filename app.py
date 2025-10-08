@@ -189,14 +189,14 @@ def is_excluded_for_specific(shop_name):
 
 
 # === ROUTES ===
-@app.route("/")
-def index():
-    conn = get_db_connection()
-    blocks = [r["block"] for r in conn.execute("SELECT DISTINCT block FROM shops").fetchall()]
-    conn.close()
-    if "Специфические объекты" not in blocks:
-        blocks.append("Специфические объекты")
-    return render_template("index.html", blocks=sorted(blocks))
+# @app.route("/")
+# def index():
+#     conn = get_db_connection()
+#     blocks = [r["block"] for r in conn.execute("SELECT DISTINCT block FROM shops").fetchall()]
+#     conn.close()
+#     if "Специфические объекты" not in blocks:
+#         blocks.append("Специфические объекты")
+#     return render_template("index.html", blocks=sorted(blocks))
 
 
 @app.route("/get_rows/<block>")
