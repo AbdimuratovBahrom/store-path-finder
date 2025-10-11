@@ -6,17 +6,45 @@
     box-sizing: border-box;
 }
 
-body {
+ body {
     font-family: 'Inter', sans-serif;
     color: #2d3748;
     line-height: 1.6;
     min-height: 100vh;
-    background-image: url(/static/images/abu-saxiy2.webp);
+    margin: 0;
+    padding: 0;
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
     background-repeat: no-repeat;
-    transition: background-image 1s ease-in-out;
+    transition: background-image 2s ease-in-out;
+    animation: changeBackground 60s infinite;
+    /* общее время цикла (5 слайдов × 11 сек) */
+}
+
+@keyframes changeBackground {
+    0% {
+        background-image: url('/static/images/abu-saxiy28.jpg');
+    }
+
+    20% {
+        background-image: url('/static/images/abu-saxiy3.webp');
+    }
+
+    40% {
+        background-image: url('/static/images/abu-saxiy7.webp');
+    }
+
+    60% {
+        background-image: url('/static/images/abu-saxiy14.webp');
+    }
+
+    80% {
+        background-image: url('/static/images/abu-saxiy2.webp');
+    }
+
+    100% {
+        background-image: url('/static/images/abu-saxiy8.webp');
+    }
 }
 
 .header {

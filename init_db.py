@@ -193,3 +193,5 @@ for block, entries in SPECIFIC_OBJECTS.items():
 conn.commit()
 conn.close()
 print("✅ Database initialized. Если у тебя есть block*_data.py они добавлены; также добавлены SPECIFIC_OBJECTS.")
+
+

@@ -8,6 +8,8 @@ from flask_babel import Babel, gettext as _, get_locale
 
 
 
+
+
 app = Flask(__name__)
 
 
@@ -188,16 +190,6 @@ def is_excluded_for_specific(shop_name):
     return False
 
 
-# === ROUTES ===
-# @app.route("/")
-# def index():
-#     conn = get_db_connection()
-#     blocks = [r["block"] for r in conn.execute("SELECT DISTINCT block FROM shops").fetchall()]
-#     conn.close()
-#     if "Специфические объекты" not in blocks:
-#         blocks.append("Специфические объекты")
-#     return render_template("index.html", blocks=sorted(blocks))
-
 
 @app.route("/get_rows/<block>")
 def get_rows(block):
@@ -269,30 +261,19 @@ def get_path(block, row, shop):
     return jsonify({"path": " | ".join(paths)})
 
 
-@app.route("/search")
-def search():
-    keyword = request.args.get("keyword", "").strip()
-    if not keyword:
-        return jsonify({"error": _("Введите запрос")})
-    conn = get_db_connection()
-    results = conn.execute(
-        "SELECT * FROM shops WHERE shop LIKE ? OR path LIKE ? OR block LIKE ? OR row LIKE ?",
-        (f"%{keyword}%", f"%{keyword}%", f"%{keyword}%", f"%{keyword}%")
-    ).fetchall()
-    conn.close()
+# @app.route("/search")
+# def search():
+#     keyword = request.args.get("keyword", "").strip()
+#     if not keyword:
+#         return jsonify({"error": "Введите запрос"})
 
-    if not results:
-        return jsonify({"error": _("Ничего не найдено")})
-
-    formatted = []
-    for r in results:
-        path = r["path"]
-        if not path.endswith(str(r["shop"])):
-            path += f" > {r['shop']}"
-        formatted.append(f"{path}")
-
-    return jsonify({"results": list(dict.fromkeys(formatted))})
+#     results = find_paths(keyword)
+#     if not results:
+#         return jsonify({"error": "Ничего не найдено"})
+#     return jsonify({"paths": results})
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+

@@ -9,6 +9,16 @@
   <title>{{ _('Store Path Finder') }}</title>
   <link rel="shortcut icon" href="/static/images/Logo Abu saxiy.jpg" type="image/x-icon">
   <link rel="stylesheet" href="/static/style.css">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CSLVN9R4D2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-CSLVN9R4D2');
+  </script>
 </head>
 
 <body>
@@ -51,23 +61,25 @@
       </select>
 
       <div id="pathResult"></div>
+      <div class="case">
+        <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">
+          {{ _('Блоки 1,2,3') }}
+        </a>
+      </div>
+
     </div>
   </div>
 
-  <div class="search-form">
+  <!-- <div class="search-form">
     <form onsubmit="return doSearch(event)">
       <input type="text" id="keyword" placeholder="{{ _('Введите номер или название...') }}">
       <button type="submit">🔍</button>
     </form>
   </div>
 
-  <div id="search-results"></div>
+  <div id="search-results"></div> -->
 
-  <div class="case">
-    <a target="_blank" href="https://abdimuratovbahrom.github.io/tashkent-trade-center/">
-      {{ _('Блоки 1,2,3') }}
-    </a>
-  </div>
+  
 
   <script src="/static/script.js"></script>
 </body>
