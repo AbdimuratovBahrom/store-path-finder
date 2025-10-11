@@ -44,6 +44,10 @@ git push origin main
 
 https://store-path-finder-app.onrender.com
 
+https://analytics.google.com/
+
+https://analytics.google.com/analytics/web/#/a362496948p498028937/admin/streams/table/
+
 
 myenv\Scripts\pybabel compile -d translations
 

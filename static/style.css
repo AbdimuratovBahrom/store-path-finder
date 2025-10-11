@@ -283,6 +283,24 @@ select:not(.language-selector select):focus {
     min-height: 32px;
     width: 250px;
 }
+.footer img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 0.9rem;
+    color: rgb(45, 43, 43);
+}
+footer a {
+    color: #1e40af;
+    text-decoration: none;
+    font-weight: 600;
+}
 
 @keyframes fadeIn {
     from {
