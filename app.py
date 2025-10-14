@@ -259,16 +259,6 @@ def get_path(block, row, shop):
     return jsonify({"path": " | ".join(paths)})
 
 
-# @app.route("/search")
-# def search():
-#     keyword = request.args.get("keyword", "").strip()
-#     if not keyword:
-#         return jsonify({"error": "Введите запрос"})
-
-#     results = find_paths(keyword)
-#     if not results:
-#         return jsonify({"error": "Ничего не найдено"})
-#     return jsonify({"paths": results})
 
 
 if __name__ == "__main__":
