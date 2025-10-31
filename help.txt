@@ -11,7 +11,6 @@ git add  .
 
 git commit -m "add up grade"
 
-git commit -m "add "
 
 git push origin main
 
