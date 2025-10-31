@@ -1,0 +1,35 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: AbuSaxiy 1.0\n"
+"Language: uz_Latn\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Поиск магазина"
+msgstr "Do‘kon qidiruvi"
+
+msgid "Скрыть блоки"
+msgstr "Bloklarni yashirish"
+
+msgid "Показать блоки"
+msgstr "Bloklarni ko‘rsatish"
+
+msgid "Поиск линий электроснабжения магазинов"
+msgstr "Do‘konlarning elektr tarmoqlarini qidirish"
+
+msgid "Выберите блок"
+msgstr "Blokni tanlang"
+
+msgid "Выберите ряд"
+msgstr "Qatorni tanlang"
+
+msgid "Выберите магазин"
+msgstr "Do‘konni tanlang"
+
+msgid "Введите номер или название..."
+msgstr "Raqam yoki nomni kiriting..."
+
+msgid "Блоки 1,2,3"
+msgstr "1,2,3-bloklar"
+
+msgid "Ничего не найдено"
+msgstr "Hech narsa topilmadi"

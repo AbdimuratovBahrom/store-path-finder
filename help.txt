@@ -1,0 +1,77 @@
+
+
+
+
+
+git add  .
+git commit -m "add up grade"
+git push origin main
+
+
+https://store-path-finder-app.onrender.com
+
+https://analytics.google.com/
+
+https://analytics.google.com/analytics/web/#/a362496948p498028937/admin/streams/table/
+
+
+myenv\Scripts\pybabel compile -d translations
+
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+
+pip install -r requirements.txt
+
+del shops.db
+python import_data.py
+python init_db.py
+
+myenv\Scripts\pybabel compile -d translations
+
+python app.py
+
+sqlite3 shops.db
+.schema shops
+
+CREATE TABLE shops (
+    block TEXT,
+    shop_number TEXT,
+    path TEXT
+);
+
+
+http://127.0.0.1:5000/
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+
+del shops.db
+
+python init_db.py
+python test_db.py
+python app.py
+
+
+pybabel compile -d translations
+
+
+
+http://127.0.0.1:5000/
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+del shops.db
+
+
+python init_db.py
+dir shops.db
+python test_db.py
+python app.py
+
+
+cd C:\Users\user\store-path-finder
+myenv\Scripts\activate
+python init_db.py
+python test_db.py
+python app.py
