@@ -33,3 +33,6 @@ msgstr "1,2,3-bloklar"
 
 msgid "Ничего не найдено"
 msgstr "Hech narsa topilmadi"
+
+msgid "Гипермаркет"
+msgstr "Gipermarket"

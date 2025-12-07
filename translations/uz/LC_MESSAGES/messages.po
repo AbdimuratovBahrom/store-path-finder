@@ -70,3 +70,8 @@ msgstr ""
 msgid "Блоки 1,2,3"
 msgstr ""
 
+#: templates/index.html:95
+msgid "Гипермаркет"
+msgstr ""
+
+
